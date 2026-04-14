@@ -64,6 +64,10 @@ defmodule AccessGuardian.Catalog.User do
       ])
     end
 
+    update :update do
+      accept([:full_name, :department, :job_title, :manager_id, :slack_user_id, :org_role])
+    end
+
     read :by_org do
       argument(:organization_id, :uuid, allow_nil?: false)
       filter(expr(organization_id == ^arg(:organization_id)))

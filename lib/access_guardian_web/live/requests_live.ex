@@ -145,12 +145,18 @@ defmodule AccessGuardianWeb.RequestsLive do
   end
 
   defp load_request(id) do
-    {:ok, request} = AccessGuardian.Access.get_request(id)
+    case AccessGuardian.Access.get_request(id) do
+      {:ok, request} ->
+        {:ok, request} =
+          Ash.load(request, [:affected_user, :requested_by, :application, approvals: [:approver]])
 
-    {:ok, request} =
-      Ash.load(request, [:affected_user, :requested_by, :application, approvals: [:approver]])
+        request
 
-    request
+      _ ->
+        nil
+    end
+  rescue
+    _ -> nil
   end
 
   defp get_org do

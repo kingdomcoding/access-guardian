@@ -37,27 +37,35 @@ defmodule AccessGuardianWeb.SlackController do
          %{"type" => "view_submission", "callback_id" => "submit_request"} = payload
        ) do
     slack_user_id = get_in(payload, ["user", "id"])
-    user = EnsureUser.call(slack_user_id)
 
-    values = get_in(payload, ["view", "state", "values"])
-    app_id = get_in(values, ["app_block", "application_id", "selected_option", "value"])
-    reason = get_in(values, ["reason_block", "reason", "value"])
-
-    case AccessGuardian.Access.create_request(%{
-           organization_id: user.organization_id,
-           affected_user_id: user.id,
-           requested_by_id: user.id,
-           application_id: app_id,
-           request_reason: reason
-         }) do
-      {:ok, _request} ->
-        json(conn, %{response_action: "clear"})
-
-      {:error, _} ->
+    case EnsureUser.call(slack_user_id) do
+      nil ->
         json(conn, %{
           response_action: "errors",
-          errors: %{reason_block: "Failed to create request"}
+          errors: %{reason_block: "Could not identify your user account. Try again."}
         })
+
+      user ->
+        values = get_in(payload, ["view", "state", "values"])
+        app_id = get_in(values, ["app_block", "application_id", "selected_option", "value"])
+        reason = get_in(values, ["reason_block", "reason", "value"])
+
+        case AccessGuardian.Access.create_request(%{
+               organization_id: user.organization_id,
+               affected_user_id: user.id,
+               requested_by_id: user.id,
+               application_id: app_id,
+               request_reason: reason
+             }) do
+          {:ok, _request} ->
+            json(conn, %{response_action: "clear"})
+
+          {:error, _} ->
+            json(conn, %{
+              response_action: "errors",
+              errors: %{reason_block: "Failed to create request"}
+            })
+        end
     end
   end
 
@@ -65,6 +73,15 @@ defmodule AccessGuardianWeb.SlackController do
     action_id = action["action_id"]
     slack_user_id = get_in(payload, ["user", "id"])
     user = EnsureUser.call(slack_user_id)
+
+    if is_nil(user) do
+      send_resp(conn, 200, "")
+    else
+      handle_block_action(conn, action_id, user, payload)
+    end
+  end
+
+  defp handle_block_action(conn, action_id, user, payload) do
     channel = get_in(payload, ["channel", "id"])
     message_ts = get_in(payload, ["message", "ts"])
 
