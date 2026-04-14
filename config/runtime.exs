@@ -23,6 +23,10 @@ end
 config :access_guardian, AccessGuardianWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+if System.get_env("SLACK_ENABLED") == "true" do
+  config :access_guardian, :slack_enabled, true
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
