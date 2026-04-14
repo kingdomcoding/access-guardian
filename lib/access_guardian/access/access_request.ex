@@ -99,6 +99,7 @@ defmodule AccessGuardian.Access.AccessRequest do
     end
 
     update :approve do
+      require_atomic? false
       argument :approver_id, :uuid, allow_nil?: false
       argument :override_by_id, :uuid
 
@@ -109,6 +110,7 @@ defmodule AccessGuardian.Access.AccessRequest do
     end
 
     update :deny do
+      require_atomic? false
       argument :denier_id, :uuid, allow_nil?: false
       argument :reason, :string
 
@@ -125,11 +127,13 @@ defmodule AccessGuardian.Access.AccessRequest do
     end
 
     update :advance_to_provisioning do
+      require_atomic? false
       change set_attribute(:status, :provisioning)
       change {AccessGuardian.Access.Changes.EnqueueProvisioning, []}
     end
 
     update :set_approved do
+      require_atomic? false
       change set_attribute(:status, :approved)
       change set_attribute(:approved_at, &DateTime.utc_now/0)
     end
@@ -139,6 +143,7 @@ defmodule AccessGuardian.Access.AccessRequest do
     end
 
     update :complete_provisioning do
+      require_atomic? false
       argument :adapter_type, :string
       argument :external_account_id, :string
 
@@ -156,6 +161,7 @@ defmodule AccessGuardian.Access.AccessRequest do
     end
 
     update :fail_provisioning do
+      require_atomic? false
       argument :adapter_type, :string
       argument :error_reason, :string
 
@@ -170,11 +176,13 @@ defmodule AccessGuardian.Access.AccessRequest do
     end
 
     update :mark_pending_manual do
+      require_atomic? false
       change set_attribute(:pending_manual, true)
       change set_attribute(:provisioner_type, "manual")
     end
 
     update :complete_manual_grant do
+      require_atomic? false
       argument :admin_id, :uuid
 
       change set_attribute(:status, :granted)
@@ -186,6 +194,7 @@ defmodule AccessGuardian.Access.AccessRequest do
     end
 
     update :reject_manual_grant do
+      require_atomic? false
       argument :admin_id, :uuid
       argument :reason, :string
 
