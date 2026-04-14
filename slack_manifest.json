@@ -14,7 +14,7 @@
         "command": "/request",
         "url": "https://YOUR_NGROK_URL/api/slack/commands",
         "description": "Request access to a SaaS application",
-        "usage_hint": "[application name]",
+        "usage_hint": "Hit enter to open the request form",
         "should_escape": false
       }
     ]
