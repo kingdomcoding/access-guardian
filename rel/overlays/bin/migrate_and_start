@@ -4,8 +4,5 @@ set -e
 echo "Running migrations..."
 /app/bin/access_guardian eval "AccessGuardian.Release.migrate()"
 
-echo "Seeding database..."
-/app/bin/access_guardian eval "AccessGuardian.Release.seed()"
-
-echo "Starting server..."
+echo "Starting server (with seed on first boot)..."
 exec /app/bin/access_guardian start

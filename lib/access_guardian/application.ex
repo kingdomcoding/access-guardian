@@ -17,7 +17,27 @@ defmodule AccessGuardian.Application do
     ]
 
     opts = [strategy: :one_for_one, name: AccessGuardian.Supervisor]
-    Supervisor.start_link(children, opts)
+    result = Supervisor.start_link(children, opts)
+
+    maybe_seed()
+
+    result
+  end
+
+  defp maybe_seed do
+    case Ash.read(AccessGuardian.Catalog.Organization) do
+      {:ok, []} ->
+        seeds_path = Application.app_dir(:access_guardian, "priv/repo/seeds.exs")
+
+        if File.exists?(seeds_path) do
+          Code.eval_file(seeds_path)
+        end
+
+      _ ->
+        :ok
+    end
+  rescue
+    _ -> :ok
   end
 
   @impl true

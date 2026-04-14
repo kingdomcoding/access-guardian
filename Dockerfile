@@ -1,11 +1,10 @@
 ARG ELIXIR_VERSION=1.17.3
-ARG OTP_VERSION=27.1
-ARG DEBIAN_VERSION=bookworm-20240701-slim
+ARG OTP_VERSION=27.2
+ARG DEBIAN_VERSION=bookworm-20241202-slim
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
 
-# --- Build stage ---
 FROM ${BUILDER_IMAGE} AS builder
 
 RUN apt-get update -y && apt-get install -y build-essential git curl \
@@ -19,21 +18,21 @@ ENV MIX_ENV="prod"
 
 COPY mix.exs mix.lock ./
 RUN mix deps.get --only $MIX_ENV
-RUN mkdir config
+
 COPY config/config.exs config/${MIX_ENV}.exs config/runtime.exs config/
+
 RUN mix deps.compile
 
 COPY priv priv
 COPY lib lib
 COPY assets assets
-
-RUN mix assets.deploy
-RUN mix compile
-
 COPY rel rel
+
+RUN mix assets.setup
+RUN mix compile
+RUN mix assets.deploy
 RUN mix release
 
-# --- Runner stage ---
 FROM ${RUNNER_IMAGE}
 
 RUN apt-get update -y && \

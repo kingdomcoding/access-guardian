@@ -14,7 +14,7 @@ defmodule AccessGuardian.MixProject do
       listeners: [Phoenix.CodeReloader],
       releases: [
         access_guardian: [
-          overlays: ["rel/migrate_and_start"]
+          overlays: "rel/overlays"
         ]
       ]
     ]

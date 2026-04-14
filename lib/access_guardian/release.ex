@@ -10,10 +10,13 @@ defmodule AccessGuardian.Release do
   end
 
   def seed do
-    load_app()
-    {:ok, _, _} = Ecto.Migrator.with_repo(AccessGuardian.Repo, fn _repo ->
-      Code.eval_file("priv/repo/seeds.exs")
-    end)
+    Application.ensure_all_started(@app)
+
+    seeds_path = Application.app_dir(@app, "priv/repo/seeds.exs")
+
+    if File.exists?(seeds_path) do
+      Code.eval_file(seeds_path)
+    end
   end
 
   def rollback(repo, version) do
