@@ -118,17 +118,30 @@ defmodule AccessGuardian.AccessTest do
     end
 
     test "fail_provisioning sets rejected", ctx do
-      create_policy!(ctx.org, [])
+      # Create a request with a single-step policy so we can manually control provisioning
+      create_policy!(ctx.org, [
+        %{step_index: 0, approver_type: :manager, response_mode: :first_to_respond}
+      ])
+
+      manager = create_user!(ctx.org, %{full_name: "Mgr", org_role: :org_admin})
+      employee = create_user!(ctx.org, %{full_name: "Emp", manager_id: manager.id})
 
       {:ok, request} =
         AccessGuardian.Access.create_request(%{
           organization_id: ctx.org.id,
-          affected_user_id: ctx.employee.id,
-          requested_by_id: ctx.employee.id,
+          affected_user_id: employee.id,
+          requested_by_id: employee.id,
           application_id: ctx.app.id
         })
 
-      {:ok, latest} = AccessGuardian.Access.get_request(request.id)
+      assert request.status == :pending_approval
+
+      # Approve → triggers provisioning
+      {:ok, approved} =
+        AccessGuardian.Access.approve_request(request, %{approver_id: manager.id})
+
+      Process.sleep(100)
+      {:ok, latest} = AccessGuardian.Access.get_request(approved.id)
 
       if latest.status == :provisioning do
         {:ok, rejected} =

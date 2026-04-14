@@ -23,8 +23,8 @@ config :access_guardian, AccessGuardianWeb.Endpoint,
 # Print only warnings and errors during test
 config :logger, level: :warning
 
-# Oban inline mode for synchronous tests
-config :access_guardian, Oban, testing: :inline
+# Oban manual mode — jobs are inserted but not executed
+config :access_guardian, Oban, testing: :manual
 
 # Ash test config
 config :ash, :disable_async?, true
