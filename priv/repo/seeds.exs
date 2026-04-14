@@ -244,7 +244,10 @@ Access.AccessRequest
 |> Ash.Changeset.force_change_attribute(:status, :rejected)
 |> Ash.Changeset.force_change_attribute(:rejected_at, DateTime.utc_now())
 |> Ash.Changeset.force_change_attribute(:adapter_type, "agentic")
-|> Ash.Changeset.force_change_attribute(:reject_reason, "UI changed — selector not found at fill_form")
+|> Ash.Changeset.force_change_attribute(
+  :reject_reason,
+  "UI changed — selector not found at fill_form"
+)
 |> Ash.create!()
 
 IO.puts("✅ Seed complete. Visit http://localhost:4000")

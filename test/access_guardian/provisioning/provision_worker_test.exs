@@ -18,7 +18,8 @@ defmodule AccessGuardian.Provisioning.ProvisionWorkerTest do
   end
 
   defp create_provisioning_request(ctx, integration_type) do
-    app = create_app!(ctx.org, %{name: "App-#{integration_type}", integration_type: integration_type})
+    app =
+      create_app!(ctx.org, %{name: "App-#{integration_type}", integration_type: integration_type})
 
     {:ok, request} =
       AccessGuardian.Access.create_request(%{
