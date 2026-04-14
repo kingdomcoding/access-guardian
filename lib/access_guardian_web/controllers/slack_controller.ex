@@ -1,7 +1,7 @@
 defmodule AccessGuardianWeb.SlackController do
   use AccessGuardianWeb, :controller
 
-  alias AccessGuardian.Slack.BlockKit
+  alias AccessGuardian.Slack.{BlockKit, EnsureUser}
 
   defp api_client, do: Application.get_env(:access_guardian, :slack_api_module)
 
@@ -37,7 +37,7 @@ defmodule AccessGuardianWeb.SlackController do
          %{"type" => "view_submission", "callback_id" => "submit_request"} = payload
        ) do
     slack_user_id = get_in(payload, ["user", "id"])
-    {:ok, user} = AccessGuardian.Catalog.get_user_by_slack_id(slack_user_id)
+    user = EnsureUser.call(slack_user_id)
 
     values = get_in(payload, ["view", "state", "values"])
     app_id = get_in(values, ["app_block", "application_id", "selected_option", "value"])
@@ -64,7 +64,7 @@ defmodule AccessGuardianWeb.SlackController do
   defp handle_interaction(conn, %{"type" => "block_actions", "actions" => [action | _]} = payload) do
     action_id = action["action_id"]
     slack_user_id = get_in(payload, ["user", "id"])
-    {:ok, user} = AccessGuardian.Catalog.get_user_by_slack_id(slack_user_id)
+    user = EnsureUser.call(slack_user_id)
     channel = get_in(payload, ["channel", "id"])
     message_ts = get_in(payload, ["message", "ts"])
 

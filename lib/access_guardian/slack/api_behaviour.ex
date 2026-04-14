@@ -5,4 +5,6 @@ defmodule AccessGuardian.Slack.ApiBehaviour do
               :ok | {:error, term()}
   @callback update_message(channel :: String.t(), ts :: String.t(), blocks :: list()) ::
               :ok | {:error, term()}
+  @callback get_user_info(user_id :: String.t()) ::
+              {:ok, map()} | {:error, term()}
 end
