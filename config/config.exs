@@ -16,6 +16,7 @@ config :access_guardian,
   ]
 
 config :access_guardian, :slack_enabled, false
+config :access_guardian, :slack_api_module, AccessGuardian.Slack.ApiClient
 
 config :access_guardian, Oban,
   repo: AccessGuardian.Repo,

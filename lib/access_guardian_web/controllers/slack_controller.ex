@@ -1,7 +1,9 @@
 defmodule AccessGuardianWeb.SlackController do
   use AccessGuardianWeb, :controller
 
-  alias AccessGuardian.Slack.{BlockKit, ApiClient}
+  alias AccessGuardian.Slack.BlockKit
+
+  defp api_client, do: Application.get_env(:access_guardian, :slack_api_module)
 
   plug AccessGuardianWeb.Plugs.SlackSignature
 
@@ -9,7 +11,7 @@ defmodule AccessGuardianWeb.SlackController do
     org = get_org()
     {:ok, apps} = AccessGuardian.Catalog.list_applications_by_org(org.id)
     modal = BlockKit.request_modal(apps)
-    ApiClient.open_modal(trigger_id, modal)
+    api_client().open_modal(trigger_id, modal)
     send_resp(conn, 200, "")
   end
 
@@ -71,7 +73,7 @@ defmodule AccessGuardianWeb.SlackController do
         request_id = String.replace_prefix(action_id, "approve_request:", "")
         {:ok, request} = AccessGuardian.Access.get_request(request_id)
         AccessGuardian.Access.approve_request(request, %{approver_id: user.id})
-        ApiClient.update_message(channel, message_ts, BlockKit.approved_update(user.full_name))
+        api_client().update_message(channel, message_ts, BlockKit.approved_update(user.full_name))
 
       String.starts_with?(action_id, "deny_request:") ->
         request_id = String.replace_prefix(action_id, "deny_request:", "")
@@ -82,7 +84,7 @@ defmodule AccessGuardianWeb.SlackController do
           reason: "Denied via Slack"
         })
 
-        ApiClient.update_message(
+        api_client().update_message(
           channel,
           message_ts,
           BlockKit.denied_update(user.full_name, "Denied via Slack")
@@ -93,7 +95,7 @@ defmodule AccessGuardianWeb.SlackController do
         {:ok, request} = AccessGuardian.Access.get_request(request_id)
         AccessGuardian.Access.complete_manual_grant(request, %{admin_id: user.id})
 
-        ApiClient.update_message(channel, message_ts, [
+        api_client().update_message(channel, message_ts, [
           %{
             type: "section",
             text: %{type: "mrkdwn", text: "✅ *Granted* by #{user.full_name}"}
@@ -109,7 +111,7 @@ defmodule AccessGuardianWeb.SlackController do
           reason: "Rejected via Slack"
         })
 
-        ApiClient.update_message(channel, message_ts, [
+        api_client().update_message(channel, message_ts, [
           %{
             type: "section",
             text: %{type: "mrkdwn", text: "❌ *Rejected* by #{user.full_name}"}

@@ -1,7 +1,9 @@
 defmodule AccessGuardian.Slack.Listener do
   use GenServer
 
-  alias AccessGuardian.Slack.{ApiClient, BlockKit}
+  alias AccessGuardian.Slack.BlockKit
+
+  defp api_client, do: Application.get_env(:access_guardian, :slack_api_module)
 
   def start_link(_opts) do
     if Application.get_env(:access_guardian, :slack_enabled) do
@@ -52,7 +54,7 @@ defmodule AccessGuardian.Slack.Listener do
 
         if approver.slack_user_id do
           blocks = BlockKit.approval_request_dm(request)
-          ApiClient.post_message(approver.slack_user_id, blocks, text: "New access request")
+          api_client().post_message(approver.slack_user_id, blocks, text: "New access request")
         end
       end)
     end
@@ -61,7 +63,7 @@ defmodule AccessGuardian.Slack.Listener do
   defp notify_requester(request, outcome) do
     if request.affected_user && request.affected_user.slack_user_id do
       blocks = BlockKit.provisioning_result_dm(request, outcome)
-      ApiClient.post_message(to_string(request.affected_user.slack_user_id), blocks)
+      api_client().post_message(to_string(request.affected_user.slack_user_id), blocks)
     end
   end
 
@@ -74,7 +76,7 @@ defmodule AccessGuardian.Slack.Listener do
 
       if admin.slack_user_id do
         blocks = BlockKit.manual_grant_dm(request, admin.full_name)
-        ApiClient.post_message(admin.slack_user_id, blocks, text: "Manual provisioning needed")
+        api_client().post_message(admin.slack_user_id, blocks, text: "Manual provisioning needed")
       end
     end)
   end
