@@ -12,6 +12,7 @@ defmodule AccessGuardian.Application do
       {Phoenix.PubSub, name: AccessGuardian.PubSub},
       {Oban, Application.fetch_env!(:access_guardian, Oban)},
       {Task.Supervisor, name: AccessGuardian.SlackTaskSupervisor},
+      AccessGuardian.Slack.Listener,
       AccessGuardianWeb.Endpoint
     ]
 
