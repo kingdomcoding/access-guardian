@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+
+echo "==> Installing dependencies"
+mix deps.get
+
+echo "==> Setting up database"
+mix ash.setup
+
+echo "==> Seeding data"
+mix run priv/repo/seeds.exs
+
+echo "==> Done! Run 'mix phx.server' to start."
