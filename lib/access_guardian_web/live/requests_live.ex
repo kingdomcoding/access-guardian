@@ -187,8 +187,8 @@ defmodule AccessGuardianWeb.RequestsLive do
     ~H"""
     <div class="max-w-7xl mx-auto px-4 py-6">
       <div class="flex items-center justify-between mb-6">
-        <h1 class="text-xl font-bold text-gray-900">Access Requests</h1>
-        <.link navigate="/" class="text-sm text-gray-500 hover:text-gray-700">← Dashboard</.link>
+        <h1 class="text-xl font-bold text-base-content">Access Requests</h1>
+        <.link navigate="/" class="text-sm link link-hover text-base-content/60">← Dashboard</.link>
       </div>
 
       <div class="flex flex-wrap gap-3 mb-4">
@@ -199,11 +199,11 @@ defmodule AccessGuardianWeb.RequestsLive do
             value={@search}
             placeholder="Search by name, email, or app..."
             phx-debounce="300"
-            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            class="input input-bordered input-sm w-full"
           />
         </form>
         <form phx-change="filter">
-          <select name="status" class="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+          <select name="status" class="select select-bordered select-sm">
             <option value="" selected={@filter == nil}>All</option>
             <option value="pending_approval" selected={@filter == "pending_approval"}>Pending</option>
             <option value="provisioning" selected={@filter == "provisioning"}>Provisioning</option>
@@ -216,7 +216,7 @@ defmodule AccessGuardianWeb.RequestsLive do
 
       <div class="flex gap-6">
         <div class={[
-          "flex-1 bg-white rounded-xl border border-gray-200 divide-y divide-gray-100",
+          "flex-1 bg-base-100 rounded-xl border border-base-300 divide-y divide-base-200",
           @selected && "hidden lg:block"
         ]}>
           <div
@@ -224,17 +224,17 @@ defmodule AccessGuardianWeb.RequestsLive do
             phx-click="select"
             phx-value-id={req.id}
             class={[
-              "flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50",
-              @selected && @selected.id == req.id && "bg-blue-50"
+              "flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-base-200",
+              @selected && @selected.id == req.id && "bg-base-200"
             ]}
           >
             <div class="min-w-0">
-              <p class="text-sm font-medium text-gray-900 truncate">{req.affected_user.full_name}</p>
-              <p class="text-xs text-gray-500">{req.application.name}</p>
+              <p class="text-sm font-medium text-base-content truncate">{req.affected_user.full_name}</p>
+              <p class="text-xs text-base-content/50">{req.application.name}</p>
             </div>
             <.status_badge status={req.status} pending_manual={req.pending_manual} />
           </div>
-          <div :if={@requests == []} class="px-4 py-8 text-center text-sm text-gray-500">
+          <div :if={@requests == []} class="px-4 py-8 text-center text-sm text-base-content/50">
             No requests found.
           </div>
         </div>
@@ -249,88 +249,72 @@ defmodule AccessGuardianWeb.RequestsLive do
 
   defp request_detail(assigns) do
     ~H"""
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <div class="bg-base-100 rounded-xl border border-base-300 p-5">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-semibold text-gray-900">Request Detail</h2>
-        <button phx-click="close_detail" class="text-gray-400 hover:text-gray-600 text-lg">
+        <h2 class="text-sm font-semibold text-base-content">Request Detail</h2>
+        <button phx-click="close_detail" class="text-base-content/40 hover:text-base-content/70 text-lg">
           &times;
         </button>
       </div>
 
       <dl class="space-y-2 text-sm">
         <div class="flex justify-between">
-          <dt class="text-gray-500">Requester</dt>
-          <dd class="font-medium">{@request.affected_user.full_name}</dd>
+          <dt class="text-base-content/60">Requester</dt>
+          <dd class="font-medium text-base-content">{@request.affected_user.full_name}</dd>
         </div>
         <div class="flex justify-between">
-          <dt class="text-gray-500">Application</dt>
-          <dd>{@request.application.name}</dd>
+          <dt class="text-base-content/60">Application</dt>
+          <dd class="text-base-content">{@request.application.name}</dd>
         </div>
         <div class="flex justify-between">
-          <dt class="text-gray-500">Status</dt>
+          <dt class="text-base-content/60">Status</dt>
           <dd><.status_badge status={@request.status} pending_manual={@request.pending_manual} /></dd>
         </div>
         <div :if={@request.request_reason} class="flex justify-between">
-          <dt class="text-gray-500">Reason</dt>
-          <dd class="text-right max-w-[220px]">{@request.request_reason}</dd>
+          <dt class="text-base-content/60">Reason</dt>
+          <dd class="text-base-content text-right max-w-[220px]">{@request.request_reason}</dd>
         </div>
         <div :if={@request.adapter_type} class="flex justify-between">
-          <dt class="text-gray-500">Adapter</dt>
-          <dd>{@request.adapter_type}</dd>
+          <dt class="text-base-content/60">Adapter</dt>
+          <dd class="text-base-content">{@request.adapter_type}</dd>
         </div>
         <div :if={@request.reject_reason} class="flex justify-between">
-          <dt class="text-gray-500">Error</dt>
-          <dd class="text-red-600 text-right max-w-[220px]">{@request.reject_reason}</dd>
+          <dt class="text-base-content/60">Error</dt>
+          <dd class="text-error text-right max-w-[220px]">{@request.reject_reason}</dd>
         </div>
         <div :if={@request.deny_reason} class="flex justify-between">
-          <dt class="text-gray-500">Denial</dt>
-          <dd class="text-red-600 text-right max-w-[220px]">{@request.deny_reason}</dd>
+          <dt class="text-base-content/60">Denial</dt>
+          <dd class="text-error text-right max-w-[220px]">{@request.deny_reason}</dd>
         </div>
       </dl>
 
-      <div :if={@request.approvals != []} class="mt-4 pt-3 border-t border-gray-100">
-        <h3 class="text-xs font-semibold text-gray-500 uppercase mb-2">Approval Timeline</h3>
+      <div :if={@request.approvals != []} class="mt-4 pt-3 border-t border-base-200">
+        <h3 class="text-xs font-semibold text-base-content/50 uppercase mb-2">Approval Timeline</h3>
         <div :for={a <- @request.approvals} class="flex items-center gap-2 text-sm py-1">
           <span class={[
             "w-2 h-2 rounded-full",
-            if(a.decision == :approved, do: "bg-green-500", else: "bg-red-500")
+            if(a.decision == :approved, do: "bg-success", else: "bg-error")
           ]} />
-          <span>{a.approver.full_name}</span>
-          <span :if={a.override_by_id} class="text-xs text-gray-400">(override)</span>
-          <span class="text-xs text-gray-400">step {a.step_index}</span>
+          <span class="text-base-content">{a.approver.full_name}</span>
+          <span :if={a.override_by_id} class="text-xs text-base-content/40">(override)</span>
+          <span class="text-xs text-base-content/40">step {a.step_index}</span>
         </div>
       </div>
 
-      <div :if={@request.status == :pending_approval} class="mt-4 pt-3 border-t flex gap-2">
-        <button
-          phx-click="approve"
-          phx-value-id={@request.id}
-          class="flex-1 bg-green-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-green-700"
-        >
+      <div :if={@request.status == :pending_approval} class="mt-4 pt-3 border-t border-base-200 flex gap-2">
+        <button phx-click="approve" phx-value-id={@request.id} class="btn btn-success btn-sm flex-1">
           Approve
         </button>
-        <button
-          phx-click="deny"
-          phx-value-id={@request.id}
-          class="flex-1 bg-red-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-700"
-        >
+        <button phx-click="deny" phx-value-id={@request.id} class="btn btn-error btn-sm flex-1">
           Deny
         </button>
       </div>
 
-      <div :if={@request.pending_manual} class="mt-4 pt-3 border-t flex gap-2">
-        <button
-          phx-click="manual_grant"
-          phx-value-id={@request.id}
-          class="flex-1 bg-green-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-green-700"
-        >
+      <div :if={@request.pending_manual} class="mt-4 pt-3 border-t border-base-200 flex gap-2">
+        <button phx-click="manual_grant" phx-value-id={@request.id} class="btn btn-success btn-sm flex-1">
           Grant Access
         </button>
-        <button
-          phx-click="manual_reject"
-          phx-value-id={@request.id}
-          class="flex-1 bg-red-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-700"
-        >
+        <button phx-click="manual_reject" phx-value-id={@request.id} class="btn btn-error btn-sm flex-1">
           Reject
         </button>
       </div>

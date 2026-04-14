@@ -53,49 +53,49 @@ defmodule AccessGuardianWeb.DashboardLive do
     ~H"""
     <div class="max-w-7xl mx-auto px-4 py-6">
       <div class="flex items-center justify-between mb-6">
-        <h1 class="text-xl font-bold text-gray-900">AccessGuardian Dashboard</h1>
-        <.link navigate="/requests" class="text-sm text-blue-600 hover:underline">
+        <h1 class="text-xl font-bold text-base-content">AccessGuardian Dashboard</h1>
+        <.link navigate="/requests" class="text-sm link link-primary">
           View all requests →
         </.link>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div class="bg-white rounded-xl border border-gray-200 p-5">
-          <p class="text-sm font-medium text-gray-500">Pipeline</p>
-          <p class="text-2xl font-bold text-gray-900 mt-1">{@stats.total}</p>
-          <p class="text-xs text-gray-500 mt-1">{@stats.pending} pending approval</p>
+        <div class="bg-base-100 rounded-xl border border-base-300 p-5">
+          <p class="text-sm font-medium text-base-content/60">Pipeline</p>
+          <p class="text-2xl font-bold text-base-content mt-1">{@stats.total}</p>
+          <p class="text-xs text-base-content/60 mt-1">{@stats.pending} pending approval</p>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-5">
-          <p class="text-sm font-medium text-gray-500">Granted</p>
-          <p class="text-2xl font-bold text-green-600 mt-1">{@stats.granted}</p>
+        <div class="bg-base-100 rounded-xl border border-base-300 p-5">
+          <p class="text-sm font-medium text-base-content/60">Granted</p>
+          <p class="text-2xl font-bold text-success mt-1">{@stats.granted}</p>
         </div>
-        <div class={"bg-white rounded-xl border p-5 " <> if(@stats.needs_attention > 0, do: "border-orange-200", else: "border-gray-200")}>
-          <p class="text-sm font-medium text-gray-500">Needs Attention</p>
-          <p class="text-2xl font-bold text-gray-900 mt-1">{@stats.needs_attention}</p>
+        <div class={"bg-base-100 rounded-xl border p-5 " <> if(@stats.needs_attention > 0, do: "border-warning", else: "border-base-300")}>
+          <p class="text-sm font-medium text-base-content/60">Needs Attention</p>
+          <p class="text-2xl font-bold text-base-content mt-1">{@stats.needs_attention}</p>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <div class="bg-base-100 rounded-xl border border-base-300 p-5">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-sm font-semibold text-gray-900">Recent Requests</h2>
-          <.link navigate="/requests" class="text-xs text-blue-600 hover:underline">View all →</.link>
+          <h2 class="text-sm font-semibold text-base-content">Recent Requests</h2>
+          <.link navigate="/requests" class="text-xs link link-primary">View all →</.link>
         </div>
-        <div class="divide-y divide-gray-100">
+        <div class="divide-y divide-base-200">
           <.link
             :for={req <- @recent}
             navigate={"/requests?selected=#{req.id}"}
-            class="flex items-center justify-between py-3 hover:bg-gray-50 -mx-2 px-2 rounded-lg"
+            class="flex items-center justify-between py-3 hover:bg-base-200 -mx-2 px-2 rounded-lg"
           >
             <div class="flex items-center gap-3 min-w-0">
-              <span class="text-sm text-gray-900 truncate">{req.affected_user.full_name}</span>
-              <span class="text-xs text-gray-500">{req.application.name}</span>
+              <span class="text-sm text-base-content truncate">{req.affected_user.full_name}</span>
+              <span class="text-xs text-base-content/50">{req.application.name}</span>
             </div>
             <div class="flex items-center gap-2">
               <.status_badge status={req.status} pending_manual={req.pending_manual} />
-              <span class="text-xs text-gray-400 hidden sm:inline">{time_ago(req.inserted_at)}</span>
+              <span class="text-xs text-base-content/40 hidden sm:inline">{time_ago(req.inserted_at)}</span>
             </div>
           </.link>
-          <p :if={@recent == []} class="py-8 text-center text-sm text-gray-500">
+          <p :if={@recent == []} class="py-8 text-center text-sm text-base-content/50">
             No requests yet.
           </p>
         </div>

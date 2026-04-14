@@ -9,20 +9,20 @@ defmodule AccessGuardianWeb.StatusHelpers do
     assigns = assign(assigns, text: text, class: class)
 
     ~H"""
-    <span class={"inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium #{@class}"}>
+    <span class={"badge badge-sm #{@class}"}>
       {@text}
     </span>
     """
   end
 
-  defp badge_display(:pending_approval, _), do: {"Pending", "bg-yellow-100 text-yellow-800"}
-  defp badge_display(:approved, _), do: {"Approved", "bg-blue-100 text-blue-800"}
-  defp badge_display(:provisioning, true), do: {"Manual", "bg-orange-100 text-orange-800"}
-  defp badge_display(:provisioning, _), do: {"Provisioning", "bg-blue-100 text-blue-800"}
-  defp badge_display(:granted, _), do: {"Granted", "bg-green-100 text-green-800"}
-  defp badge_display(:rejected, _), do: {"Rejected", "bg-red-100 text-red-800"}
-  defp badge_display(:denied, _), do: {"Denied", "bg-red-100 text-red-800"}
-  defp badge_display(_, _), do: {"Unknown", "bg-gray-100 text-gray-800"}
+  defp badge_display(:pending_approval, _), do: {"Pending", "badge-warning"}
+  defp badge_display(:approved, _), do: {"Approved", "badge-info"}
+  defp badge_display(:provisioning, true), do: {"Manual", "badge-warning badge-outline"}
+  defp badge_display(:provisioning, _), do: {"Provisioning", "badge-info"}
+  defp badge_display(:granted, _), do: {"Granted", "badge-success"}
+  defp badge_display(:rejected, _), do: {"Rejected", "badge-error"}
+  defp badge_display(:denied, _), do: {"Denied", "badge-error"}
+  defp badge_display(_, _), do: {"Unknown", "badge-ghost"}
 
   def time_ago(datetime) do
     diff = DateTime.diff(DateTime.utc_now(), datetime, :second)
