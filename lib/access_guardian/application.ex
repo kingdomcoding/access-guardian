@@ -1,6 +1,4 @@
 defmodule AccessGuardian.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
   @moduledoc false
 
   use Application
@@ -12,20 +10,15 @@ defmodule AccessGuardian.Application do
       AccessGuardian.Repo,
       {DNSCluster, query: Application.get_env(:access_guardian, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: AccessGuardian.PubSub},
-      # Start a worker by calling: AccessGuardian.Worker.start_link(arg)
-      # {AccessGuardian.Worker, arg},
-      # Start to serve requests, typically the last entry
+      {Oban, Application.fetch_env!(:access_guardian, Oban)},
+      {Task.Supervisor, name: AccessGuardian.SlackTaskSupervisor},
       AccessGuardianWeb.Endpoint
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: AccessGuardian.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
-  # Tell Phoenix to update the endpoint configuration
-  # whenever the application is updated.
   @impl true
   def config_change(changed, _new, removed) do
     AccessGuardianWeb.Endpoint.config_change(changed, removed)

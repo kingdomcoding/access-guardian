@@ -9,7 +9,17 @@ import Config
 
 config :access_guardian,
   ecto_repos: [AccessGuardian.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  ash_domains: [
+    AccessGuardian.Catalog,
+    AccessGuardian.Access
+  ]
+
+config :access_guardian, :slack_enabled, false
+
+config :access_guardian, Oban,
+  repo: AccessGuardian.Repo,
+  queues: [default: 10, provisioning: 5]
 
 # Configure the endpoint
 config :access_guardian, AccessGuardianWeb.Endpoint,

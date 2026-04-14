@@ -23,6 +23,13 @@ config :access_guardian, AccessGuardianWeb.Endpoint,
 # Print only warnings and errors during test
 config :logger, level: :warning
 
+# Oban inline mode for synchronous tests
+config :access_guardian, Oban, testing: :inline
+
+# Ash test config
+config :ash, :disable_async?, true
+config :ash, :missed_notifications, :ignore
+
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 

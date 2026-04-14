@@ -63,7 +63,21 @@ defmodule AccessGuardian.MixProject do
       {:gettext, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+
+      # Ash Framework
+      {:ash, "~> 3.0"},
+      {:ash_postgres, "~> 2.0"},
+      {:ash_phoenix, "~> 2.0"},
+
+      # Background jobs
+      {:oban, "~> 2.18"},
+
+      # HTTP client (Slack API)
+      {:req, "~> 0.5"},
+
+      # Test
+      {:mox, "~> 1.0", only: :test}
     ]
   end
 
@@ -75,9 +89,9 @@ defmodule AccessGuardian.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
-      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      setup: ["deps.get", "ash.setup", "assets.setup", "assets.build"],
+      "ecto.setup": ["ash.setup"],
+      "ecto.reset": ["ecto.drop", "ash.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.build": ["compile", "tailwind access_guardian", "esbuild access_guardian"],
