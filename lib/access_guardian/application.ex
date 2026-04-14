@@ -25,16 +25,20 @@ defmodule AccessGuardian.Application do
   end
 
   defp maybe_seed do
-    case Ash.read(AccessGuardian.Catalog.Organization) do
-      {:ok, []} ->
-        seeds_path = Application.app_dir(:access_guardian, "priv/repo/seeds.exs")
+    if Application.get_env(:access_guardian, :skip_seed, false) do
+      :ok
+    else
+      case Ash.read(AccessGuardian.Catalog.Organization) do
+        {:ok, []} ->
+          seeds_path = Application.app_dir(:access_guardian, "priv/repo/seeds.exs")
 
-        if File.exists?(seeds_path) do
-          Code.eval_file(seeds_path)
-        end
+          if File.exists?(seeds_path) do
+            Code.eval_file(seeds_path)
+          end
 
-      _ ->
-        :ok
+        _ ->
+          :ok
+      end
     end
   rescue
     _ -> :ok

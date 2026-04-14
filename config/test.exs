@@ -33,6 +33,9 @@ config :ash, :missed_notifications, :ignore
 # Slack mock in tests
 config :access_guardian, :slack_api_module, AccessGuardian.Slack.ApiMock
 
+# Don't auto-seed in tests
+config :access_guardian, :skip_seed, true
+
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 
