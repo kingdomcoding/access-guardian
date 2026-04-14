@@ -1,5 +1,6 @@
 defmodule AccessGuardianWeb.SlackController do
   use AccessGuardianWeb, :controller
+  require Logger
 
   alias AccessGuardian.Slack.{BlockKit, EnsureUser}
 
@@ -34,7 +35,7 @@ defmodule AccessGuardianWeb.SlackController do
 
   defp handle_interaction(
          conn,
-         %{"type" => "view_submission", "callback_id" => "submit_request"} = payload
+         %{"type" => "view_submission", "view" => %{"callback_id" => "submit_request"}} = payload
        ) do
     slack_user_id = get_in(payload, ["user", "id"])
 
