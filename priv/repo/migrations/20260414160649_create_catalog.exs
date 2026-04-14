@@ -50,7 +50,8 @@ defmodule AccessGuardian.Repo.Migrations.CreateCatalog do
             name: "permissions_resource_id_fkey",
             type: :uuid,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :name, :text, null: false
       add :selection_type, :text, null: false, default: "single"
@@ -125,7 +126,8 @@ defmodule AccessGuardian.Repo.Migrations.CreateCatalog do
             name: "approval_policies_organization_id_fkey",
             type: :uuid,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :name, :text, null: false
       add :is_default, :boolean, default: false
@@ -168,7 +170,8 @@ defmodule AccessGuardian.Repo.Migrations.CreateCatalog do
             name: "applications_organization_id_fkey",
             type: :uuid,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :name, :text, null: false
       add :status, :text, null: false, default: "assigned"
@@ -208,7 +211,8 @@ defmodule AccessGuardian.Repo.Migrations.CreateCatalog do
             name: "application_admin_assignments_application_id_fkey",
             type: :uuid,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :user_id,
           references(:users,
@@ -216,7 +220,8 @@ defmodule AccessGuardian.Repo.Migrations.CreateCatalog do
             name: "application_admin_assignments_user_id_fkey",
             type: :uuid,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
     end
 
     create unique_index(:application_admin_assignments, [:application_id, :user_id],

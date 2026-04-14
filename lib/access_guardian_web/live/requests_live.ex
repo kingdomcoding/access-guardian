@@ -42,12 +42,15 @@ defmodule AccessGuardianWeb.RequestsLive do
 
   @impl true
   def handle_event("search", %{"search" => q}, socket) do
-    {:noreply, push_patch(socket, to: build_url(%{"search" => q, "filter" => socket.assigns.filter}))}
+    {:noreply,
+     push_patch(socket, to: build_url(%{"search" => q, "filter" => socket.assigns.filter}))}
   end
 
   def handle_event("filter", %{"status" => s}, socket) do
     f = if s == "", do: nil, else: s
-    {:noreply, push_patch(socket, to: build_url(%{"filter" => f, "search" => socket.assigns.search}))}
+
+    {:noreply,
+     push_patch(socket, to: build_url(%{"filter" => f, "search" => socket.assigns.search}))}
   end
 
   def handle_event("select", %{"id" => id}, socket) do
@@ -143,7 +146,10 @@ defmodule AccessGuardianWeb.RequestsLive do
 
   defp load_request(id) do
     {:ok, request} = AccessGuardian.Access.get_request(id)
-    {:ok, request} = Ash.load(request, [:affected_user, :requested_by, :application, approvals: [:approver]])
+
+    {:ok, request} =
+      Ash.load(request, [:affected_user, :requested_by, :application, approvals: [:approver]])
+
     request
   end
 
@@ -240,7 +246,9 @@ defmodule AccessGuardianWeb.RequestsLive do
     <div class="bg-white rounded-xl border border-gray-200 p-5">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-sm font-semibold text-gray-900">Request Detail</h2>
-        <button phx-click="close_detail" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
+        <button phx-click="close_detail" class="text-gray-400 hover:text-gray-600 text-lg">
+          &times;
+        </button>
       </div>
 
       <dl class="space-y-2 text-sm">

@@ -30,7 +30,10 @@ defmodule AccessGuardianWeb.SlackController do
     send_resp(conn, 200, "")
   end
 
-  defp handle_interaction(conn, %{"type" => "view_submission", "callback_id" => "submit_request"} = payload) do
+  defp handle_interaction(
+         conn,
+         %{"type" => "view_submission", "callback_id" => "submit_request"} = payload
+       ) do
     slack_user_id = get_in(payload, ["user", "id"])
     {:ok, user} = AccessGuardian.Catalog.get_user_by_slack_id(slack_user_id)
 
@@ -73,7 +76,11 @@ defmodule AccessGuardianWeb.SlackController do
       String.starts_with?(action_id, "deny_request:") ->
         request_id = String.replace_prefix(action_id, "deny_request:", "")
         {:ok, request} = AccessGuardian.Access.get_request(request_id)
-        AccessGuardian.Access.deny_request(request, %{denier_id: user.id, reason: "Denied via Slack"})
+
+        AccessGuardian.Access.deny_request(request, %{
+          denier_id: user.id,
+          reason: "Denied via Slack"
+        })
 
         ApiClient.update_message(
           channel,

@@ -49,7 +49,8 @@ defmodule AccessGuardian.Repo.Migrations.CreateAccess do
             name: "access_requests_affected_user_id_fkey",
             type: :uuid,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :requested_by_id,
           references(:users,
@@ -57,7 +58,8 @@ defmodule AccessGuardian.Repo.Migrations.CreateAccess do
             name: "access_requests_requested_by_id_fkey",
             type: :uuid,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :application_id,
           references(:applications,
@@ -65,7 +67,8 @@ defmodule AccessGuardian.Repo.Migrations.CreateAccess do
             name: "access_requests_application_id_fkey",
             type: :uuid,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :status, :text, null: false, default: "pending_approval"
       add :request_reason, :text

@@ -5,9 +5,12 @@ defmodule AccessGuardian.Catalog.ApproverResolver do
     policy = load_policy(application)
 
     case policy do
-      nil -> []
+      nil ->
+        []
+
       policy ->
         steps = Map.get(policy, :steps, [])
+
         if steps == [] or not is_list(steps) do
           []
         else

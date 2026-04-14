@@ -4,51 +4,51 @@ defmodule AccessGuardian.Catalog.Application do
     data_layer: AshPostgres.DataLayer
 
   postgres do
-    table "applications"
-    repo AccessGuardian.Repo
+    table("applications")
+    repo(AccessGuardian.Repo)
   end
 
   attributes do
-    uuid_primary_key :id
+    uuid_primary_key(:id)
 
-    attribute :organization_id, :uuid, allow_nil?: false, public?: true
-    attribute :name, :string, allow_nil?: false, public?: true
+    attribute(:organization_id, :uuid, allow_nil?: false, public?: true)
+    attribute(:name, :string, allow_nil?: false, public?: true)
 
     attribute :status, :atom do
-      constraints one_of: [:assigned, :discovered, :ignored]
-      default :assigned
-      allow_nil? false
-      public? true
+      constraints(one_of: [:assigned, :discovered, :ignored])
+      default(:assigned)
+      allow_nil?(false)
+      public?(true)
     end
 
     attribute :integration_type, :atom do
-      constraints one_of: [:api, :agentic, :scim, :manual]
-      default :manual
-      allow_nil? false
-      public? true
+      constraints(one_of: [:api, :agentic, :scim, :manual])
+      default(:manual)
+      allow_nil?(false)
+      public?(true)
     end
 
-    attribute :business_owner_id, :uuid, public?: true
-    attribute :approval_policy_id, :uuid, public?: true
+    attribute(:business_owner_id, :uuid, public?: true)
+    attribute(:approval_policy_id, :uuid, public?: true)
 
-    create_timestamp :inserted_at
-    update_timestamp :updated_at
+    create_timestamp(:inserted_at)
+    update_timestamp(:updated_at)
   end
 
   relationships do
     belongs_to :organization, AccessGuardian.Catalog.Organization do
-      attribute_writable? true
-      public? true
+      attribute_writable?(true)
+      public?(true)
     end
 
     belongs_to :business_owner, AccessGuardian.Catalog.User do
-      attribute_writable? true
-      public? true
+      attribute_writable?(true)
+      public?(true)
     end
 
     belongs_to :approval_policy, AccessGuardian.Catalog.ApprovalPolicy do
-      attribute_writable? true
-      public? true
+      attribute_writable?(true)
+      public?(true)
     end
 
     has_many :resources, AccessGuardian.Catalog.Resource
@@ -56,17 +56,23 @@ defmodule AccessGuardian.Catalog.Application do
   end
 
   actions do
-    defaults [:read]
+    defaults([:read])
 
     create :create do
-      accept [:organization_id, :name, :status, :integration_type,
-              :business_owner_id, :approval_policy_id]
+      accept([
+        :organization_id,
+        :name,
+        :status,
+        :integration_type,
+        :business_owner_id,
+        :approval_policy_id
+      ])
     end
 
     read :assigned_by_org do
-      argument :organization_id, :uuid, allow_nil?: false
-      filter expr(organization_id == ^arg(:organization_id) and status == :assigned)
-      prepare build(sort: [name: :asc])
+      argument(:organization_id, :uuid, allow_nil?: false)
+      filter(expr(organization_id == ^arg(:organization_id) and status == :assigned))
+      prepare(build(sort: [name: :asc]))
     end
   end
 end

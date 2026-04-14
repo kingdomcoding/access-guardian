@@ -38,8 +38,9 @@ defmodule AccessGuardianWeb.ApplicationsLive do
             <div>
               <p class="text-sm font-medium text-gray-900">{app.name}</p>
               <p class="text-xs text-gray-500 mt-0.5">
-                Owner: {if app.business_owner, do: app.business_owner.full_name, else: "—"}
-                · {length(app.admin_assignments)} admin(s)
+                Owner: {if app.business_owner, do: app.business_owner.full_name, else: "—"} · {length(
+                  app.admin_assignments
+                )} admin(s)
               </p>
             </div>
             <span class={[

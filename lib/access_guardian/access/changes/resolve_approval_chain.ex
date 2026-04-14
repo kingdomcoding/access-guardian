@@ -19,7 +19,10 @@ defmodule AccessGuardian.Access.Changes.ResolveApprovalChain do
       |> Ash.Changeset.set_context(%{approval_chain: chain})
     else
       _ ->
-        Ash.Changeset.add_error(changeset, field: :application_id, message: "application or user not found")
+        Ash.Changeset.add_error(changeset,
+          field: :application_id,
+          message: "application or user not found"
+        )
     end
   end
 end

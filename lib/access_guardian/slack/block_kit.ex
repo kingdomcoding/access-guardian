@@ -20,7 +20,12 @@ defmodule AccessGuardian.Slack.BlockKit do
 
   def provisioning_result_dm(request, :rejected) do
     reason = request.reject_reason || "Unknown error"
-    [section("❌ *Access to #{request.application.name} could not be provisioned.* Reason: #{reason}")]
+
+    [
+      section(
+        "❌ *Access to #{request.application.name} could not be provisioned.* Reason: #{reason}"
+      )
+    ]
   end
 
   def manual_grant_dm(request, admin_name) do

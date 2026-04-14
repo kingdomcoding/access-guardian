@@ -13,13 +13,24 @@ defmodule AccessGuardian.Catalog.ApproverResolverTest do
 
   test "zero-step policy returns empty list", %{org: org, employee: employee} do
     create_policy!(org, [])
-    {:ok, app} = AccessGuardian.Catalog.create_application(%{organization_id: org.id, name: "App"})
+
+    {:ok, app} =
+      AccessGuardian.Catalog.create_application(%{organization_id: org.id, name: "App"})
+
     assert ApproverResolver.resolve(app, employee) == []
   end
 
-  test "manager step resolves to requesting user's manager", %{org: org, manager: manager, employee: employee} do
-    create_policy!(org, [%{step_index: 0, approver_type: :manager, response_mode: :first_to_respond}])
-    {:ok, app} = AccessGuardian.Catalog.create_application(%{organization_id: org.id, name: "App"})
+  test "manager step resolves to requesting user's manager", %{
+    org: org,
+    manager: manager,
+    employee: employee
+  } do
+    create_policy!(org, [
+      %{step_index: 0, approver_type: :manager, response_mode: :first_to_respond}
+    ])
+
+    {:ok, app} =
+      AccessGuardian.Catalog.create_application(%{organization_id: org.id, name: "App"})
 
     chain = ApproverResolver.resolve(app, employee)
 
@@ -32,10 +43,16 @@ defmodule AccessGuardian.Catalog.ApproverResolverTest do
     reviewer = create_user!(org, %{full_name: "Reviewer"})
 
     create_policy!(org, [
-      %{step_index: 0, approver_type: :individual, specific_user_id: reviewer.id, response_mode: :first_to_respond}
+      %{
+        step_index: 0,
+        approver_type: :individual,
+        specific_user_id: reviewer.id,
+        response_mode: :first_to_respond
+      }
     ])
 
-    {:ok, app} = AccessGuardian.Catalog.create_application(%{organization_id: org.id, name: "App"})
+    {:ok, app} =
+      AccessGuardian.Catalog.create_application(%{organization_id: org.id, name: "App"})
 
     chain = ApproverResolver.resolve(app, employee)
     assert length(chain) == 1
@@ -43,7 +60,9 @@ defmodule AccessGuardian.Catalog.ApproverResolverTest do
   end
 
   test "no policy returns empty list", %{org: org, employee: employee} do
-    {:ok, app} = AccessGuardian.Catalog.create_application(%{organization_id: org.id, name: "App"})
+    {:ok, app} =
+      AccessGuardian.Catalog.create_application(%{organization_id: org.id, name: "App"})
+
     assert ApproverResolver.resolve(app, employee) == []
   end
 end
