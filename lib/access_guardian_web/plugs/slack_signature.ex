@@ -4,6 +4,14 @@ defmodule AccessGuardianWeb.Plugs.SlackSignature do
   def init(opts), do: opts
 
   def call(conn, _opts) do
+    if not Application.get_env(:access_guardian, :slack_enabled, false) do
+      conn |> send_resp(503, "Slack not configured") |> halt()
+    else
+      verify_signature(conn)
+    end
+  end
+
+  defp verify_signature(conn) do
     signing_secret = System.get_env("SLACK_SIGNING_SECRET") || ""
     timestamp = List.first(get_req_header(conn, "x-slack-request-timestamp")) || "0"
     signature = List.first(get_req_header(conn, "x-slack-signature")) || ""
