@@ -10,10 +10,11 @@ defmodule AccessGuardian.Application do
       AccessGuardian.Repo,
       {DNSCluster, query: Application.get_env(:access_guardian, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: AccessGuardian.PubSub},
+      {Finch, name: AccessGuardian.Finch},
       {Oban, Application.fetch_env!(:access_guardian, Oban)},
       {Task.Supervisor, name: AccessGuardian.SlackTaskSupervisor},
-      AccessGuardian.Slack.Listener,
-      AccessGuardianWeb.Endpoint
+      AccessGuardianWeb.Endpoint,
+      AccessGuardian.Slack.Listener
     ]
 
     opts = [strategy: :one_for_one, name: AccessGuardian.Supervisor]
