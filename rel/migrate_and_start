@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+echo "Running migrations..."
+/app/bin/access_guardian eval "AccessGuardian.Release.migrate()"
+
+echo "Seeding database..."
+/app/bin/access_guardian eval "AccessGuardian.Release.seed()"
+
+echo "Starting server..."
+exec /app/bin/access_guardian start

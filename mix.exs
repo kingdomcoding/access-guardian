@@ -11,7 +11,12 @@ defmodule AccessGuardian.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      releases: [
+        access_guardian: [
+          overlays: ["rel/migrate_and_start"]
+        ]
+      ]
     ]
   end
 
