@@ -17,6 +17,8 @@ services:
     build: .
     ports:
       - "6000:6000"
+    env_file:
+      - .env
     environment:
       DATABASE_URL: ecto://postgres:postgres@db/access_guardian_prod
       SECRET_KEY_BASE: "generate-a-real-secret-with-mix-phx-gen-secret-at-least-64-bytes-long-here"
