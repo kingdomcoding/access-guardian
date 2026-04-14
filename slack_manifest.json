@@ -1,0 +1,48 @@
+{
+  "display_information": {
+    "name": "AccessGuardian",
+    "description": "SaaS access request and provisioning management",
+    "background_color": "#0f2342"
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "AccessGuardian",
+      "always_online": true
+    },
+    "slash_commands": [
+      {
+        "command": "/request",
+        "url": "https://YOUR_NGROK_URL/api/slack/commands",
+        "description": "Request access to a SaaS application",
+        "usage_hint": "",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": [
+        "chat:write",
+        "commands",
+        "im:write",
+        "users:read",
+        "users:read.email"
+      ]
+    }
+  },
+  "settings": {
+    "event_subscriptions": {
+      "request_url": "https://YOUR_NGROK_URL/api/slack/events",
+      "bot_events": [
+        "app_home_opened"
+      ]
+    },
+    "interactivity": {
+      "is_enabled": true,
+      "request_url": "https://YOUR_NGROK_URL/api/slack/interactions"
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}
