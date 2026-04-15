@@ -129,6 +129,17 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
         </.link>
       </div>
 
+      <div :if={@gitlab_app} class="bg-base-100 rounded-xl border border-base-300 p-4 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-semibold text-base-content">{@gitlab_app.name}</span>
+          <span class="badge badge-xs badge-secondary">Agentic</span>
+          <span class="badge badge-xs badge-success">PLAYWRIGHT</span>
+        </div>
+        <p class="text-xs text-base-content/50 mt-1">
+          Group: <span class="font-medium">{@group_path}</span>
+        </p>
+      </div>
+
       <div :if={@current_session} class="alert alert-success mb-6">
         <div>
           <p class="font-semibold">GitLab session active</p>
@@ -171,6 +182,9 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
         <p class="text-xs text-base-content/40 mt-2">
           Cookie-Editor exports all cookies including httpOnly session cookies that JavaScript cannot access.
         </p>
+        <p class="text-xs text-base-content/40 mt-1">
+          If you can't install extensions, open DevTools (F12) &rarr; Application &rarr; Cookies &rarr; select all rows &rarr; copy as JSON.
+        </p>
       </div>
 
       <div class="bg-base-100 rounded-xl border border-base-300 p-5 mb-3">
@@ -190,7 +204,8 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
           </div>
 
           <button type="submit" class="btn btn-success w-full" disabled={@submitting}>
-            {if @submitting, do: "Validating...", else: "Validate & Save Session"}
+            <span :if={@submitting} class="loading loading-spinner loading-sm"></span>
+            {if @submitting, do: "Validating session...", else: "Validate & Save Session"}
           </button>
         </form>
 
