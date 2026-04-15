@@ -9,7 +9,8 @@ defmodule AccessGuardian.Slack.BlockKitTest do
       affected_user: %{full_name: "David Kim"},
       application: %{name: "GitHub"},
       request_reason: "Need repo access",
-      reject_reason: nil
+      reject_reason: nil,
+      adapter_type: nil
     }
   end
 

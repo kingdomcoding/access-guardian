@@ -22,7 +22,19 @@ defmodule AccessGuardian.Slack.BlockKit do
   end
 
   def provisioning_result_dm(request, :granted) do
-    [section(~s(✅ *Access granted* to *#{request.application.name}*. You're all set.))]
+    msg =
+      case request.adapter_type do
+        "github_api" ->
+          "📧 An invitation to *#{request.application.name}* has been sent to your email. Check your inbox and accept it to get access."
+
+        "notion_playwright" ->
+          "📧 An invitation to *#{request.application.name}* has been sent to your email."
+
+        _ ->
+          "✅ *Access granted* to *#{request.application.name}*. You're all set."
+      end
+
+    [section(msg)]
   end
 
   def provisioning_result_dm(request, :rejected) do
