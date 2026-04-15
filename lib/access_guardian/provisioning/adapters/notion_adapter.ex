@@ -7,14 +7,13 @@ defmodule AccessGuardian.Provisioning.Adapters.NotionAdapter do
   end
 
   @impl true
-  def provision(app, user, _entitlements) do
+  def provision(_app, user, _entitlements) do
     email = to_string(user.email)
-    workspace_url = app.config["notion_workspace_url"] || System.get_env("NOTION_WORKSPACE_URL")
 
     Logger.info("[NotionAdapter] Provisioning #{email} via Playwright service")
 
     case Req.post("#{service_url()}/provision",
-           json: %{email: email, workspace_url: workspace_url},
+           json: %{email: email},
            receive_timeout: 30_000,
            connect_options: [timeout: 5_000]
          ) do
@@ -40,14 +39,13 @@ defmodule AccessGuardian.Provisioning.Adapters.NotionAdapter do
   end
 
   @impl true
-  def deprovision(app, user) do
+  def deprovision(_app, user) do
     email = to_string(user.email)
-    workspace_url = app.config["notion_workspace_url"] || System.get_env("NOTION_WORKSPACE_URL")
 
     Logger.info("[NotionAdapter] Deprovisioning #{email} via Playwright service")
 
     case Req.post("#{service_url()}/deprovision",
-           json: %{email: email, workspace_url: workspace_url},
+           json: %{email: email},
            receive_timeout: 30_000,
            connect_options: [timeout: 5_000]
          ) do

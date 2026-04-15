@@ -22,21 +22,16 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
        page_title: "Integration Setup",
        notion_app: notion_app,
        current_session: current_session,
-       workspace_url: (notion_app && notion_app.config["notion_workspace_url"]) || "",
        status: nil,
        submitting: false
      )}
   end
 
   @impl true
-  def handle_event(
-        "submit_cookies",
-        %{"cookies" => cookies_json, "workspace_url" => workspace_url},
-        socket
-      ) do
+  def handle_event("submit_cookies", %{"cookies" => cookies_json}, socket) do
     socket = assign(socket, submitting: true, status: {:loading, "Validating cookies..."})
 
-    case validate_and_save(cookies_json, workspace_url, socket.assigns.notion_app) do
+    case validate_and_save(cookies_json, socket.assigns.notion_app) do
       {:ok, session} ->
         {:noreply,
          assign(socket,
@@ -54,15 +49,15 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
     end
   end
 
-  defp validate_and_save(cookies_json, workspace_url, notion_app) do
+  defp validate_and_save(cookies_json, notion_app) do
     with {:ok, cookies} <- parse_cookies(cookies_json),
-         {:ok, _} <- call_playwright_validate(cookies, workspace_url) do
+         {:ok, _} <- call_playwright_validate(cookies) do
       expire_existing_sessions(:notion)
 
       attrs = %{
         platform: :notion,
         status: :active,
-        workspace_url: workspace_url,
+        workspace_url: "https://www.notion.so",
         captured_at: DateTime.utc_now(),
         application_id: notion_app && notion_app.id
       }
@@ -81,11 +76,11 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
     end
   end
 
-  defp call_playwright_validate(cookies, workspace_url) do
+  defp call_playwright_validate(cookies) do
     service_url = System.get_env("PLAYWRIGHT_SERVICE_URL") || "http://playwright:3000"
 
     case Req.post("#{service_url}/validate-session",
-           json: %{cookies: cookies, workspace_url: workspace_url},
+           json: %{cookies: cookies},
            receive_timeout: 30_000,
            connect_options: [timeout: 5_000]
          ) do
@@ -139,7 +134,6 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
           <p class="font-semibold">Notion session active</p>
           <p class="text-sm opacity-80">
             Captured: {Calendar.strftime(@current_session.captured_at, "%b %d, %Y at %H:%M UTC")}
-            · Workspace: {@current_session.workspace_url}
           </p>
         </div>
       </div>
@@ -189,17 +183,6 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
         </p>
 
         <form phx-submit="submit_cookies">
-          <div class="mb-3">
-            <label class="label text-sm font-medium">Workspace URL</label>
-            <input
-              type="text"
-              name="workspace_url"
-              value={@workspace_url}
-              placeholder="https://www.notion.so/your-workspace"
-              class="input input-bordered w-full text-sm"
-            />
-          </div>
-
           <div class="mb-3">
             <label class="label text-sm font-medium">Cookies JSON</label>
             <textarea

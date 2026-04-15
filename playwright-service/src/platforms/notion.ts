@@ -15,11 +15,11 @@ export interface Result {
   steps: Step[];
 }
 
+const NOTION_BASE = "https://www.notion.so";
 const DEFAULT_SESSION_PATH = "/app/data/notion.json";
 
 export async function provision(
   email: string,
-  workspaceUrl: string,
   sessionPath: string = DEFAULT_SESSION_PATH
 ): Promise<Result> {
   const steps: Step[] = [];
@@ -43,7 +43,7 @@ export async function provision(
     const page = await context.newPage();
 
     steps.push({ step: 2, name: "navigate_members", status: "running" });
-    await page.goto(`${workspaceUrl}/settings/members`, {
+    await page.goto(`${NOTION_BASE}/settings/members`, {
       waitUntil: "networkidle",
       timeout: 20000,
     });
@@ -98,7 +98,6 @@ export async function provision(
 
 export async function deprovision(
   email: string,
-  workspaceUrl: string,
   sessionPath: string = DEFAULT_SESSION_PATH
 ): Promise<Result> {
   const steps: Step[] = [];
@@ -122,7 +121,7 @@ export async function deprovision(
     const page = await context.newPage();
 
     steps.push({ step: 2, name: "navigate_members", status: "running" });
-    await page.goto(`${workspaceUrl}/settings/members`, {
+    await page.goto(`${NOTION_BASE}/settings/members`, {
       waitUntil: "networkidle",
       timeout: 20000,
     });
