@@ -62,7 +62,7 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
         application_id: notion_app && notion_app.id
       }
 
-      case Ash.create(AccessGuardian.Catalog.IntegrationSession, attrs) do
+      case Ash.create(AccessGuardian.Catalog.IntegrationSession, attrs, action: :create) do
         {:ok, session} -> {:ok, session}
         {:error, err} -> {:error, "Failed to save session: #{inspect(err)}"}
       end
