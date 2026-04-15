@@ -90,21 +90,31 @@ defmodule AccessGuardianWeb.RequestsLive do
     admin = get_admin()
     {:ok, request} = AccessGuardian.Access.get_request(id)
     AccessGuardian.Access.approve_request(request, %{approver_id: admin.id})
-    {:noreply, reload(socket)}
+    {:noreply, socket |> put_flash(:info, "Request approved. Provisioning started.") |> reload()}
   end
 
-  def handle_event("deny", %{"id" => id}, socket) do
+  def handle_event("open_deny_form", %{"id" => id}, socket) do
+    {:noreply, assign(socket, deny_form_open: id)}
+  end
+
+  def handle_event("cancel_deny", _, socket) do
+    {:noreply, assign(socket, deny_form_open: nil)}
+  end
+
+  def handle_event("deny", %{"request_id" => id, "reason" => reason}, socket) do
     admin = get_admin()
     {:ok, request} = AccessGuardian.Access.get_request(id)
-    AccessGuardian.Access.deny_request(request, %{denier_id: admin.id, reason: "Denied by admin"})
-    {:noreply, reload(socket)}
+    AccessGuardian.Access.deny_request(request, %{denier_id: admin.id, reason: reason})
+
+    {:noreply,
+     socket |> assign(deny_form_open: nil) |> put_flash(:info, "Request denied.") |> reload()}
   end
 
   def handle_event("manual_grant", %{"id" => id}, socket) do
     admin = get_admin()
     {:ok, request} = AccessGuardian.Access.get_request(id)
     AccessGuardian.Access.complete_manual_grant(request, %{admin_id: admin.id})
-    {:noreply, reload(socket)}
+    {:noreply, socket |> put_flash(:info, "Access granted manually.") |> reload()}
   end
 
   def handle_event("manual_reject", %{"id" => id}, socket) do
@@ -116,7 +126,7 @@ defmodule AccessGuardianWeb.RequestsLive do
       reason: "Rejected by admin"
     })
 
-    {:noreply, reload(socket)}
+    {:noreply, socket |> put_flash(:info, "Request rejected.") |> reload()}
   end
 
   defp reload(socket) do
@@ -266,21 +276,28 @@ defmodule AccessGuardianWeb.RequestsLive do
         </div>
 
         <div :if={@selected} class="w-full lg:w-[480px] shrink-0">
-          <.request_detail request={@selected} />
+          <.request_detail request={@selected} deny_form_open={@deny_form_open} />
         </div>
       </div>
     </div>
     """
   end
 
+  attr :request, :map, required: true
+  attr :deny_form_open, :string, default: nil
+
   defp request_detail(assigns) do
     ~H"""
     <div class="bg-base-100 rounded-xl border border-base-300 p-5">
+      <button phx-click="close_detail" class="lg:hidden btn btn-ghost btn-sm mb-3 w-full">
+        &larr; Back to list
+      </button>
+
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-sm font-semibold text-base-content">Request Detail</h2>
         <button
           phx-click="close_detail"
-          class="text-base-content/40 hover:text-base-content/70 text-lg"
+          class="hidden lg:block text-base-content/40 hover:text-base-content/70 text-lg"
         >
           &times;
         </button>
@@ -298,6 +315,12 @@ defmodule AccessGuardianWeb.RequestsLive do
         <div class="flex justify-between">
           <dt class="text-base-content/60">Status</dt>
           <dd><.status_badge status={@request.status} pending_manual={@request.pending_manual} /></dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-base-content/60">Requested</dt>
+          <dd class="text-base-content" title={DateTime.to_string(@request.inserted_at)}>
+            {time_ago(@request.inserted_at)}
+          </dd>
         </div>
         <div :if={@request.request_reason} class="flex justify-between">
           <dt class="text-base-content/60">Reason</dt>
@@ -330,16 +353,39 @@ defmodule AccessGuardianWeb.RequestsLive do
         </div>
       </div>
 
-      <div
-        :if={@request.status == :pending_approval}
-        class="mt-4 pt-3 border-t border-base-200 flex gap-2"
-      >
-        <button phx-click="approve" phx-value-id={@request.id} class="btn btn-success btn-sm flex-1">
-          Approve
-        </button>
-        <button phx-click="deny" phx-value-id={@request.id} class="btn btn-error btn-sm flex-1">
-          Deny
-        </button>
+      <div :if={@request.status == :pending_approval} class="mt-4 pt-3 border-t border-base-200">
+        <div :if={@deny_form_open != @request.id} class="flex gap-2">
+          <button
+            phx-click="approve"
+            phx-value-id={@request.id}
+            class="btn btn-success btn-sm flex-1"
+          >
+            Approve
+          </button>
+          <button
+            phx-click="open_deny_form"
+            phx-value-id={@request.id}
+            class="btn btn-error btn-sm flex-1"
+          >
+            Deny
+          </button>
+        </div>
+        <form :if={@deny_form_open == @request.id} phx-submit="deny" class="space-y-2">
+          <input type="hidden" name="request_id" value={@request.id} />
+          <textarea
+            name="reason"
+            placeholder="Why is this request denied?"
+            class="textarea textarea-bordered textarea-sm w-full"
+            rows="2"
+            required
+          ></textarea>
+          <div class="flex gap-2">
+            <button type="submit" class="btn btn-error btn-sm flex-1">Confirm Deny</button>
+            <button type="button" phx-click="cancel_deny" class="btn btn-ghost btn-sm flex-1">
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
 
       <div :if={@request.pending_manual} class="mt-4 pt-3 border-t border-base-200 flex gap-2">
