@@ -49,7 +49,8 @@ defmodule AccessGuardianWeb.ApplicationsLive do
               </p>
             </div>
             <div class="flex items-center gap-1.5">
-              <span :if={app.live_integration} class="badge badge-sm badge-success">LIVE</span>
+              <span :if={app.live_integration and app.integration_type == :api} class="badge badge-sm badge-success">API</span>
+              <span :if={app.live_integration and app.integration_type == :agentic} class="badge badge-sm badge-success">PLAYWRIGHT</span>
               <span :if={not app.live_integration} class="badge badge-sm badge-ghost">MOCK</span>
               <span class={["badge badge-sm", integration_badge_class(app.integration_type)]}>
                 {app.integration_type}

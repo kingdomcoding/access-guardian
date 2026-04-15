@@ -78,7 +78,7 @@ defmodule AccessGuardian.Slack.BlockKit do
             placeholder: %{type: "plain_text", text: "Select an application"},
             options:
               Enum.map(applications, fn app ->
-                label = if app.live_integration, do: "#{app.name} ✦ live", else: app.name
+                label = app_label(app)
                 %{text: %{type: "plain_text", text: label}, value: app.id}
               end)
           },
@@ -101,6 +101,10 @@ defmodule AccessGuardian.Slack.BlockKit do
   def denied_update(denier_name, reason) do
     [section("❌ *Denied* by #{denier_name}. Reason: #{reason}")]
   end
+
+  defp app_label(%{live_integration: true, integration_type: :api} = app), do: "#{app.name} ⚡ API"
+  defp app_label(%{live_integration: true, integration_type: :agentic} = app), do: "#{app.name} ⚡ Playwright"
+  defp app_label(app), do: app.name
 
   defp section(text) do
     %{type: "section", text: %{type: "mrkdwn", text: text}}

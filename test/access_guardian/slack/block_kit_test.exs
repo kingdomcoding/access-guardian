@@ -58,8 +58,8 @@ defmodule AccessGuardian.Slack.BlockKitTest do
 
   test "request_modal contains app dropdown and reason input" do
     apps = [
-      %{id: "app-1", name: "GitHub", live_integration: true},
-      %{id: "app-2", name: "Slack", live_integration: false}
+      %{id: "app-1", name: "GitHub", live_integration: true, integration_type: :api},
+      %{id: "app-2", name: "Slack", live_integration: false, integration_type: :api}
     ]
 
     modal = BlockKit.request_modal(apps)
