@@ -13,6 +13,16 @@ services:
       timeout: 5s
       retries: 5
 
+  playwright:
+    build: ./playwright-service
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   app:
     build: .
     ports:
@@ -25,6 +35,7 @@ services:
       PHX_HOST: accessguardian.josboxoffice.com
       PHX_SERVER: "true"
       PORT: "6000"
+      PLAYWRIGHT_SERVICE_URL: "http://playwright:3000"
     depends_on:
       db:
         condition: service_healthy
