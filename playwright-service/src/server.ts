@@ -27,7 +27,8 @@ app.post("/validate-session", async (req, res) => {
     await context.addCookies(cookies);
 
     const page = await context.newPage();
-    await page.goto(NOTION_BASE, { waitUntil: "networkidle", timeout: 20000 });
+    await page.goto(NOTION_BASE, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.waitForTimeout(3000);
 
     const currentUrl = page.url();
     if (currentUrl.includes("/login") || currentUrl.includes("/signin")) {

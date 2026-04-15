@@ -44,9 +44,10 @@ export async function provision(
 
     steps.push({ step: 2, name: "navigate_members", status: "running" });
     await page.goto(`${NOTION_BASE}/settings/members`, {
-      waitUntil: "networkidle",
-      timeout: 20000,
+      waitUntil: "domcontentloaded",
+      timeout: 30000,
     });
+    await page.waitForTimeout(3000);
 
     if (page.url().includes("/login") || page.url().includes("/signin")) {
       steps[steps.length - 1].status = "failed";
@@ -122,9 +123,10 @@ export async function deprovision(
 
     steps.push({ step: 2, name: "navigate_members", status: "running" });
     await page.goto(`${NOTION_BASE}/settings/members`, {
-      waitUntil: "networkidle",
-      timeout: 20000,
+      waitUntil: "domcontentloaded",
+      timeout: 30000,
     });
+    await page.waitForTimeout(3000);
 
     if (page.url().includes("/login") || page.url().includes("/signin")) {
       steps[steps.length - 1].status = "failed";
