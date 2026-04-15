@@ -1,4 +1,11 @@
 defmodule AccessGuardian.Slack.BlockKit do
+  def request_confirmed_dm(request) do
+    [
+      section("✅ *Access request submitted* for *#{request.application.name}*"),
+      section("Your request is being reviewed. You'll be notified when it's approved or denied.")
+    ]
+  end
+
   def approval_request_dm(request) do
     [
       section("*New access request*"),

@@ -58,7 +58,17 @@ defmodule AccessGuardianWeb.SlackController do
                application_id: app_id,
                request_reason: reason
              }) do
-          {:ok, _request} ->
+          {:ok, request} ->
+            {:ok, request} = Ash.load(request, [:application])
+
+            Task.Supervisor.start_child(AccessGuardian.SlackTaskSupervisor, fn ->
+              api_client().post_message(
+                slack_user_id,
+                BlockKit.request_confirmed_dm(request),
+                text: "Access request submitted"
+              )
+            end)
+
             json(conn, %{response_action: "clear"})
 
           {:error, _} ->
