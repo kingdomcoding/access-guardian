@@ -45,5 +45,9 @@ defmodule AccessGuardian.Catalog do
       define(:create_app_account, action: :create)
       define(:active_for_user, action: :active_for_user, args: [:user_id])
     end
+
+    resource AccessGuardian.Catalog.IntegrationSession do
+      define(:create_integration_session, action: :create)
+    end
   end
 end

@@ -12,6 +12,8 @@ RUN npx playwright install chromium --with-deps
 COPY tsconfig.json ./
 COPY src/ ./src/
 
+RUN mkdir -p /app/data
+
 EXPOSE 3000
 
 CMD ["npx", "tsx", "src/server.ts"]

@@ -17,6 +17,8 @@ services:
     build: ./playwright-service
     env_file:
       - .env
+    volumes:
+      - playwright_data:/app/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 10s
@@ -42,3 +44,4 @@ services:
 
 volumes:
   pgdata:
+  playwright_data:
