@@ -29,7 +29,12 @@ defmodule AccessGuardianWeb.ApplicationsLive do
     <div class="max-w-7xl mx-auto px-4 py-6">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-xl font-bold text-base-content">Applications</h1>
-        <.link navigate="/" class="text-sm link link-hover text-base-content/60">← Dashboard</.link>
+        <div class="flex items-center gap-3">
+          <.link navigate="/integrations/setup" class="btn btn-sm btn-outline">
+            Integration Setup
+          </.link>
+          <.link navigate="/" class="text-sm link link-hover text-base-content/60">&larr; Dashboard</.link>
+        </div>
       </div>
 
       <div class="bg-base-100 rounded-xl border border-base-300 divide-y divide-base-200">

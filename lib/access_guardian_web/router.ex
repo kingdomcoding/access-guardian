@@ -21,6 +21,7 @@ defmodule AccessGuardianWeb.Router do
       live "/", DashboardLive, :index
       live "/requests", RequestsLive, :index
       live "/applications", ApplicationsLive, :index
+      live "/integrations/setup", IntegrationSetupLive, :index
     end
   end
 
