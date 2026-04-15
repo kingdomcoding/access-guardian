@@ -37,3 +37,4 @@ npm-debug.log
 
 .env
 /priv/playwright/node_modules/
+playwright-service/node_modules/
