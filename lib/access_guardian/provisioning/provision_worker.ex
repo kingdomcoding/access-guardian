@@ -53,7 +53,7 @@ defmodule AccessGuardian.Provisioning.ProvisionWorker do
           else: Adapters.ApiAdapter
 
       :agentic ->
-        if has_config?(app, "notion_workspace_url") and env_set?("NOTION_EMAIL"),
+        if has_config?(app, "notion_workspace_url") and has_active_session?(:notion),
           do: Adapters.NotionAdapter,
           else: Adapters.AgenticAdapter
 
@@ -71,6 +71,16 @@ defmodule AccessGuardian.Provisioning.ProvisionWorker do
   end
 
   defp env_set?(var), do: System.get_env(var) not in [nil, ""]
+
+  defp has_active_session?(platform) do
+    case Ash.read(AccessGuardian.Catalog.IntegrationSession) do
+      {:ok, sessions} ->
+        Enum.any?(sessions, &(&1.platform == platform and &1.status == :active))
+
+      _ ->
+        false
+    end
+  end
 
   defp adapter_label(Adapters.GithubAdapter), do: "github_api"
   defp adapter_label(Adapters.NotionAdapter), do: "notion_playwright"

@@ -25,6 +25,7 @@ defmodule AccessGuardian.Provisioning.Adapters.NotionAdapter do
       {:ok, %{status: 200, body: %{"success" => false} = body}} ->
         log_steps(body["steps"])
         error_type = if body["error_type"] == "transient", do: :transient, else: :permanent
+        maybe_expire_session(body["error"])
         {:error, error_type, body["error"] || "Playwright automation failed"}
 
       {:ok, %{status: status, body: body}} ->
@@ -55,6 +56,7 @@ defmodule AccessGuardian.Provisioning.Adapters.NotionAdapter do
 
       {:ok, %{status: 200, body: %{"success" => false} = body}} ->
         error_type = if body["error_type"] == "transient", do: :transient, else: :permanent
+        maybe_expire_session(body["error"])
         {:error, error_type, body["error"] || "Deprovision failed"}
 
       {:error, %{reason: :econnrefused}} ->
@@ -63,6 +65,24 @@ defmodule AccessGuardian.Provisioning.Adapters.NotionAdapter do
       {:error, reason} ->
         {:error, :transient, "Playwright service error: #{inspect(reason)}"}
     end
+  end
+
+  defp maybe_expire_session(nil), do: :ok
+
+  defp maybe_expire_session(error) when is_binary(error) do
+    if String.contains?(error, "expired") or String.contains?(error, "No session") do
+      case Ash.read(AccessGuardian.Catalog.IntegrationSession) do
+        {:ok, sessions} ->
+          sessions
+          |> Enum.filter(&(&1.platform == :notion and &1.status == :active))
+          |> Enum.each(fn s -> Ash.update!(s, action: :mark_expired) end)
+
+        _ ->
+          :ok
+      end
+    end
+  rescue
+    _ -> :ok
   end
 
   defp log_steps(nil), do: :ok
