@@ -53,13 +53,14 @@ defmodule AccessGuardian.Provisioning.Adapters.GithubAdapter do
         {:ok, body}
 
       {:ok, %{status: 422, body: body}} ->
-        msg = if is_map(body), do: body["message"], else: ""
+        full_text = inspect(body)
 
-        if String.contains?(msg || "", "already") do
+        if String.contains?(full_text, "already") do
           Logger.info("[GithubAdapter] #{email} already invited/member — treating as success")
           {:ok, %{"id" => email}}
         else
-          Logger.error("[GithubAdapter] 422: #{inspect(body)}")
+          msg = if is_map(body), do: body["message"], else: full_text
+          Logger.error("[GithubAdapter] 422: #{full_text}")
           {:error, :permanent, "GitHub 422: #{msg}"}
         end
 
