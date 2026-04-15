@@ -1,38 +1,25 @@
 # AccessGuardian
 
-A demo that mirrors AccessOwl's core workflow — access request, approval, and provisioning — with a Slack bot as the primary UI and a LiveView admin dashboard. Built with Elixir, Phoenix LiveView, Ash Framework, Oban, and Tailwind CSS.
+A demo that mirrors AccessOwl's core workflow — access request, approval, and provisioning — with a Slack bot as the primary UI and a LiveView admin dashboard. Built with Elixir, Phoenix LiveView, Ash Framework, Oban, and DaisyUI.
 
-## Quick Start (Web Only)
+## Live Demo
 
-```bash
-docker compose up -d        # Start PostgreSQL
-mix setup                   # Install deps, create DB, migrate, seed
-mix phx.server              # Start the server
-```
+**Dashboard:** [accessguardian.josboxoffice.com](https://accessguardian.josboxoffice.com)
 
-Visit [localhost:4000](http://localhost:4000). The seed data creates 6 users, 7 applications, 3 approval policies, and several requests in different states.
+**Slack Bot:** [Join the demo workspace](https://join.slack.com/t/access-guardian-demo/shared_invite/zt-3v3fpne7b-d_eXEtT6IBOeGtpWe_QjJw) — type `/request` to try it
 
-## Quick Start (With Slack)
-
-1. Go to [api.slack.com/apps](https://api.slack.com/apps) → "Create New App" → "From a manifest"
-2. Import `slack_manifest.json` from this repo
-3. Install to your workspace, copy the Bot Token and Signing Secret
-4. Create a `.env` file:
-   ```
-   export SLACK_BOT_TOKEN=xoxb-...
-   export SLACK_SIGNING_SECRET=...
-   export SLACK_ENABLED=true
-   ```
-5. `source .env && ngrok http 4000` — update Slack app URLs with your ngrok domain
-6. `mix ecto.reset` to re-seed with Slack user mapping
-7. Type `/request` in Slack
+Both UIs share the same backend — actions from Slack appear on the dashboard in real-time.
 
 ## What to Look At
 
-1. **Open the request queue** at `/requests` — notice requests in different states (pending, granted, denied, rejected)
-2. **Click a pending request** — see the approval timeline — click **Approve** — watch the status update in real-time as provisioning runs
-3. **Check the dashboard** at `/` — KPI cards update when requests change state
-4. **If Slack is configured**: type `/request` → fill the modal → submit → see it appear on the dashboard instantly. Approve from Slack → dashboard updates. Approve from dashboard → Slack message updates.
+1. **Visit the dashboard** — see integration status cards (GitHub API, GitLab Playwright), feature pills, and the "Create Test Request" form
+2. **Create a test request** — pick an app (note the API/Playwright/Mock labels), pick a user, submit. You're redirected to the request detail.
+3. **Approve the request** — click Approve, watch the status change to "Provisioning" then "Granted". If it's a GitHub or GitLab app with real integrations configured, a real invitation is sent.
+4. **Try denying** — click Deny on a pending request, enter a reason, confirm. The deny reason is saved and displayed.
+5. **Browse applications** at `/applications` — 29 apps grouped by integration type (API, Agentic, SCIM, Manual) with live/mock indicators
+6. **Check the integration setup** at `/integrations/setup` — see the GitLab session capture flow and the Cookie-Editor instructions
+7. **Try via Slack** — join the workspace, type `/request`, fill the modal. Watch the request appear on the dashboard in real-time.
+8. **Configure integrations from the dashboard** — click "Edit" on the GitHub or GitLab integration cards to enter credentials directly from the UI
 
 ## Architecture
 
@@ -69,12 +56,12 @@ The Playwright service is a separate Docker container running Node.js + Chromium
 
 ## Integration Catalog
 
-AccessGuardian ships with 28 applications across four integration types. Two use real external APIs; the rest use simulated adapters with realistic timing and failure rates.
+AccessGuardian ships with 29 applications across four integration types. Two use real external APIs; the rest use simulated adapters with realistic timing and failure rates.
 
 | Type | Count | Real | Simulated |
 |---|---|---|---|
-| **API** | 12 | GitHub (REST API) | Google Workspace, Slack, Zoom, 1Password, Datadog, Jira, Linear, Calendly, Amplitude, Loom |
-| **Agentic** | 13 | GitLab (Playwright) | Notion, Figma, Canva, HubSpot, Salesforce, Intercom, Asana, Monday.com, ClickUp, Miro, Dropbox |
+| **API** | 11 | GitHub (REST API) | Google Workspace, Slack, Zoom, 1Password, Datadog, Jira, Linear, Calendly, Amplitude, Loom |
+| **Agentic** | 12 | GitLab (Playwright) | Notion, Figma, Canva, HubSpot, Salesforce, Intercom, Asana, Monday.com, ClickUp, Miro, Dropbox |
 | **SCIM** | 4 | — | AWS, Okta, JumpCloud, Microsoft 365 |
 | **Manual** | 2 | — | Custom Internal Tool, Legacy CRM |
 
@@ -92,6 +79,8 @@ GITHUB_TOKEN=ghp_your-token
 GITHUB_ORG=your-org-name
 ```
 
+You can also configure these directly from the dashboard — click Edit on the GitHub integration card.
+
 **GitLab (Agentic Integration):** Session-based setup via the web UI:
 
 1. Visit `/integrations/setup` in your browser
@@ -100,7 +89,7 @@ GITHUB_ORG=your-org-name
 4. Paste the exported cookies into the setup form and submit
 5. The system validates the cookies via Playwright and saves the session
 
-After setup, all GitLab provisioning uses the stored session automatically. If the session expires, the system detects it, marks it expired in the database, and the admin re-authenticates via the same setup page.
+After setup, all GitLab provisioning uses the stored session automatically. If the session expires, the system detects it, marks it expired in the database, and the admin re-authenticates via the same setup page. The GitLab group path can also be changed from the dashboard — click Edit on the GitLab integration card.
 
 This mirrors how AccessOwl handles apps where API-based provisioning isn't available — by capturing an authenticated session once and automating the admin UI via Playwright.
 
@@ -138,12 +127,46 @@ Without configuration, GitHub and GitLab fall back to simulated adapters — ide
 
 **Mandatory resource dependency graph:** Apps with mandatory root resources create dependency chains where approving access to a sub-resource requires the parent first. Denial cascades through the dependency tree.
 
-## Running Tests
+## Running Locally
+
+### Docker Compose (recommended)
 
 ```bash
-mix test
+cp .env.example .env  # Fill in credentials
+docker compose up --build -d
 ```
+
+Three services start: PostgreSQL, Playwright (Node + Chromium), and the Elixir app on port 6000. Seeds run automatically on first boot — 29 apps, 6 users, 3 approval policies, and 6 pre-seeded requests in different states.
+
+### Local Development
+
+```bash
+mix setup        # Install deps, create DB, migrate, seed
+mix phx.server   # Start the server on port 4000
+```
+
+Requires Elixir 1.17+, Erlang 27+, and PostgreSQL running locally. The Playwright service needs to be started separately:
+
+```bash
+cd playwright-service && npm install && npm start
+```
+
+### Slack Bot (self-hosting)
+
+For the demo, the Slack workspace already exists — join via the link in the Live Demo section above.
+
+To set up your own:
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps) → "Create New App" → "From a manifest"
+2. Import `slack_manifest.json` from this repo
+3. Install to your workspace, copy the Bot Token and Signing Secret
+4. Add to `.env`:
+   ```
+   SLACK_BOT_TOKEN=xoxb-...
+   SLACK_SIGNING_SECRET=...
+   SLACK_ENABLED=true
+   ```
 
 ## AI Development
 
-This project was built with Claude Code as a development partner — used for architecture planning, Ash resource design, and test generation.
+This project was built with Claude Code as a development partner. Architecture decisions, plan iterations, and product choices were made by the developer; Claude handled implementation — resource definitions, adapter wiring, HEEx templates, and test generation.
