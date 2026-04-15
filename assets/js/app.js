@@ -25,11 +25,32 @@ import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/access_guardian"
 import topbar from "../vendor/topbar"
 
+const Hooks = {
+  ActiveNav: {
+    mounted() {
+      this.highlight(window.location.pathname)
+      window.addEventListener("phx:navigate", (e) => {
+        this.highlight(new URL(e.detail.href, window.location.origin).pathname)
+      })
+    },
+    highlight(path) {
+      this.el.querySelectorAll(".nav-link").forEach(link => {
+        const linkPath = link.dataset.path
+        const active = linkPath === "/" ? path === "/" : path.startsWith(linkPath)
+        link.classList.toggle("bg-base-200", active)
+        link.classList.toggle("text-base-content", active)
+        link.classList.toggle("font-medium", active)
+        link.classList.toggle("text-base-content/70", !active)
+      })
+    }
+  }
+}
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks},
+  hooks: {...colocatedHooks, ...Hooks},
 })
 
 // Show progress bar on live navigation and form submits

@@ -4,41 +4,52 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <.live_title default="AccessGuardian">
+    <.live_title suffix=" — AccessGuardian">
       {assigns[:page_title]}
     </.live_title>
+    <link rel="icon" href={~p"/images/favicon.svg"} type="image/svg+xml" />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
   </head>
   <body class="bg-base-200 min-h-screen">
-    <div class="flex">
-      <nav class="w-56 bg-base-100 border-r border-base-300 min-h-screen p-4 hidden lg:block">
-        <div class="text-lg font-bold text-base-content mb-6">AccessGuardian</div>
-        <div class="space-y-1">
-          <a
-            href="/"
-            class="block px-3 py-2 rounded-lg text-sm text-base-content/70 hover:bg-base-200"
-          >
-            Dashboard
-          </a>
-          <a
-            href="/requests"
-            class="block px-3 py-2 rounded-lg text-sm text-base-content/70 hover:bg-base-200"
-          >
-            Access Requests
-          </a>
-          <a
-            href="/applications"
-            class="block px-3 py-2 rounded-lg text-sm text-base-content/70 hover:bg-base-200"
-          >
-            Applications
-          </a>
+    <div class="drawer lg:drawer-open">
+      <input id="sidebar-toggle" type="checkbox" class="drawer-toggle" />
+
+      <div class="drawer-content">
+        <div class="sticky top-0 z-10 flex items-center gap-2 bg-base-200 px-4 py-2 lg:hidden">
+          <label for="sidebar-toggle" class="btn btn-ghost btn-sm btn-square">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </label>
+          <span class="text-sm font-semibold text-base-content">AccessGuardian</span>
         </div>
-      </nav>
-      <main class="flex-1">
-        {@inner_content}
-      </main>
+
+        <main class="flex-1 relative">
+          <.flash_group flash={@flash} />
+          {@inner_content}
+        </main>
+      </div>
+
+      <div class="drawer-side z-20">
+        <label for="sidebar-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
+        <nav id="sidebar-nav" phx-hook="ActiveNav" class="w-56 bg-base-100 border-r border-base-300 min-h-screen p-4">
+          <div class="text-lg font-bold text-base-content mb-1">AccessGuardian</div>
+          <div class="text-xs text-base-content/40 mb-6">Demo Mode</div>
+          <div class="space-y-1">
+            <.link navigate="/" class="nav-link block px-3 py-2 rounded-lg text-sm text-base-content/70 hover:bg-base-200" data-path="/">
+              Dashboard
+            </.link>
+            <.link navigate="/requests" class="nav-link block px-3 py-2 rounded-lg text-sm text-base-content/70 hover:bg-base-200" data-path="/requests">
+              Access Requests
+            </.link>
+            <.link navigate="/applications" class="nav-link block px-3 py-2 rounded-lg text-sm text-base-content/70 hover:bg-base-200" data-path="/applications">
+              Applications
+            </.link>
+          </div>
+        </nav>
+      </div>
     </div>
   </body>
 </html>
