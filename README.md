@@ -65,7 +65,7 @@ PostgreSQL     Playwright Service     GitHub API
                port 3000
 ```
 
-The Playwright service is a separate Docker container running Node.js + Chromium. The Elixir app calls it via HTTP — mirroring AccessOwl's architecture where the Elixir core and TypeScript integration layer are separate services.
+The Playwright service is a separate Docker container running Node.js + Chromium. It exposes three endpoints: `POST /validate-session` (cookie validation during setup), `POST /provision`, and `POST /deprovision`. The Elixir app owns the session state (in Postgres) and the setup UI (a LiveView) — the Playwright service only does what requires a real browser.
 
 ## Integration Catalog
 
@@ -82,26 +82,35 @@ AccessGuardian ships with 28 applications across four integration types. Two use
 
 **GitHub (API)** — When `GITHUB_TOKEN` and `GITHUB_ORG` are set, requesting access to GitHub actually invites the user to your GitHub organization and adds them to the configured team. Uses GitHub's REST API with proper error handling (idempotent invites, rate limit retries).
 
-**Notion (Agentic/Playwright)** — When `NOTION_EMAIL` and `NOTION_PASSWORD` are set, requesting access to Notion runs a real Playwright browser automation that logs into Notion's admin UI, navigates to Settings → Members, and invites the user by email. This is the exact approach AccessOwl uses for their "Agentic Integrations."
+**Notion (Agentic/Playwright)** — Uses persistent browser sessions via Playwright — the same approach AccessOwl uses for their "Agentic Integrations." An admin authenticates once via the setup page at `/integrations/setup`, and the system reuses the stored session for all subsequent provisioning. No login automation, no passwords in env vars.
 
 ### Setting Up Real Integrations
 
-Add to `.env`:
+**GitHub:** Add to `.env`:
 ```
 GITHUB_TOKEN=ghp_your-token
 GITHUB_ORG=your-org-name
-NOTION_EMAIL=admin@company.com
-NOTION_PASSWORD=your-password
-NOTION_WORKSPACE_URL=https://www.notion.so/yourworkspace
 ```
 
-Without these variables, GitHub and Notion fall back to simulated adapters — identical behavior to every other app.
+**Notion (Agentic Integration):** Session-based setup via the web UI:
+
+1. Visit `/integrations/setup` in your browser
+2. Log into Notion in another tab with your admin account
+3. Open browser console (F12 → Console), paste the provided cookie extraction snippet
+4. Paste the copied cookies into the setup form and submit
+5. The system validates the cookies via Playwright and saves the session
+
+After setup, all Notion provisioning uses the stored session automatically. If the session expires, the system detects it, marks it expired in the database, and the admin re-authenticates via the same setup page.
+
+This mirrors how AccessOwl handles apps with magic links, SSO, or CAPTCHA — by capturing an authenticated session once instead of automating the login flow.
+
+Without configuration, GitHub and Notion fall back to simulated adapters — identical behavior to every other app.
 
 ## Design Decisions
 
 **Why six adapters (2 real + 4 simulated):**
 - **GitHub Adapter** — Real REST API calls to GitHub. Invites users to orgs, adds to teams, handles rate limits.
-- **Notion Adapter** — Real Playwright browser automation. Logs in, navigates admin UI, invites by email. Demonstrates the exact "Agentic Integration" approach AccessOwl uses.
+- **Notion Adapter** — Real Playwright browser automation with persistent sessions. Loads a stored session (no login), navigates admin UI, invites by email. Demonstrates the exact "Agentic Integration" approach AccessOwl uses — session capture via web UI, storageState persistence, session expiry detection.
 - **API Adapter** (simulated) — 200ms-2s latency, 10% transient failures. Used by 10 mock API apps.
 - **Agentic Adapter** (simulated) — 1-5s multi-step latency, 20% transient, 5% "UI changed" failures. Used by 10 mock agentic apps.
 - **SCIM Adapter** (simulated) — Okta group assignment, low failure rate.
