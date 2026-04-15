@@ -92,6 +92,10 @@ defmodule AccessGuardianWeb.SlackController do
     end
   end
 
+  defp handle_interaction(conn, _payload) do
+    send_resp(conn, 200, "")
+  end
+
   defp handle_block_action(conn, action_id, user, payload) do
     channel = get_in(payload, ["channel", "id"])
     message_ts = get_in(payload, ["message", "ts"])
@@ -150,10 +154,6 @@ defmodule AccessGuardianWeb.SlackController do
         :ok
     end
 
-    send_resp(conn, 200, "")
-  end
-
-  defp handle_interaction(conn, _payload) do
     send_resp(conn, 200, "")
   end
 

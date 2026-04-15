@@ -30,6 +30,7 @@ defmodule AccessGuardian.Catalog.Application do
 
     attribute(:business_owner_id, :uuid, public?: true)
     attribute(:approval_policy_id, :uuid, public?: true)
+    attribute(:config, :map, default: %{}, public?: true)
 
     create_timestamp(:inserted_at)
     update_timestamp(:updated_at)
@@ -65,7 +66,8 @@ defmodule AccessGuardian.Catalog.Application do
         :status,
         :integration_type,
         :business_owner_id,
-        :approval_policy_id
+        :approval_policy_id,
+        :config
       ])
     end
 
