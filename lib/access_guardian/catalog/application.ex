@@ -73,6 +73,11 @@ defmodule AccessGuardian.Catalog.Application do
       ])
     end
 
+    update :update_config do
+      require_atomic?(false)
+      accept([:config])
+    end
+
     read :assigned_by_org do
       argument(:organization_id, :uuid, allow_nil?: false)
       filter(expr(organization_id == ^arg(:organization_id) and status == :assigned))

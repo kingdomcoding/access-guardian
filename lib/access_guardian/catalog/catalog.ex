@@ -18,6 +18,7 @@ defmodule AccessGuardian.Catalog do
       define(:get_application, action: :read, get_by: [:id])
       define(:list_applications_by_org, action: :assigned_by_org, args: [:organization_id])
       define(:create_application, action: :create)
+      define(:update_application_config, action: :update_config)
     end
 
     resource AccessGuardian.Catalog.Resource do
