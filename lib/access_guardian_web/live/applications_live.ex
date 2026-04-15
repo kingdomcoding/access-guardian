@@ -1,6 +1,13 @@
 defmodule AccessGuardianWeb.ApplicationsLive do
   use AccessGuardianWeb, :live_view
 
+  @integration_groups [
+    {:api, "API Integrations", "REST API-based provisioning"},
+    {:agentic, "Agentic Integrations", "Browser automation via Playwright"},
+    {:scim, "SCIM Integrations", "Standard SCIM protocol"},
+    {:manual, "Manual Integrations", "Human-assisted provisioning"}
+  ]
+
   @impl true
   def mount(_params, _session, socket) do
     org = get_org()
@@ -12,7 +19,14 @@ defmodule AccessGuardianWeb.ApplicationsLive do
         app
       end)
 
-    {:ok, assign(socket, page_title: "Applications", applications: apps)}
+    grouped = Enum.group_by(apps, & &1.integration_type)
+
+    {:ok,
+     assign(socket,
+       page_title: "Applications",
+       grouped: grouped,
+       groups: @integration_groups
+     )}
   end
 
   @impl true
@@ -31,44 +45,49 @@ defmodule AccessGuardianWeb.ApplicationsLive do
         <h1 class="text-xl font-bold text-base-content">Applications</h1>
         <div class="flex items-center gap-3">
           <.link navigate="/integrations/setup" class="btn btn-sm btn-outline">
-            Integration Setup
+            GitLab Session Setup
           </.link>
-          <.link navigate="/" class="text-sm link link-hover text-base-content/60">&larr; Dashboard</.link>
+          <.link navigate="/" class="text-sm link link-hover text-base-content/60">
+            &larr; Dashboard
+          </.link>
         </div>
       </div>
 
-      <div class="bg-base-100 rounded-xl border border-base-300 divide-y divide-base-200">
-        <div :for={app <- @applications} class="px-4 py-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-base-content">{app.name}</p>
-              <p class="text-xs text-base-content/50 mt-0.5">
-                Owner: {if app.business_owner, do: app.business_owner.full_name, else: "—"} · {length(
-                  app.admin_assignments
-                )} admin(s)
-              </p>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span :if={app.live_integration and app.integration_type == :api} class="badge badge-sm badge-success">API</span>
-              <span :if={app.live_integration and app.integration_type == :agentic} class="badge badge-sm badge-success">PLAYWRIGHT</span>
-              <span :if={not app.live_integration} class="badge badge-sm badge-ghost">MOCK</span>
-              <span class={["badge badge-sm", integration_badge_class(app.integration_type)]}>
-                {app.integration_type}
-              </span>
+      <div :for={{type, title, desc} <- @groups} :if={Map.has_key?(@grouped, type)} class="mb-6">
+        <div class="flex items-center gap-2 mb-2">
+          <h2 class="text-sm font-semibold text-base-content">{title}</h2>
+          <span class="badge badge-xs badge-ghost">{length(@grouped[type])}</span>
+        </div>
+        <p class="text-xs text-base-content/40 mb-2">{desc}</p>
+        <div class="bg-base-100 rounded-xl border border-base-300 divide-y divide-base-200">
+          <div :for={app <- @grouped[type]} class="px-4 py-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-base-content">{app.name}</p>
+                <p class="text-xs text-base-content/50 mt-0.5">
+                  Owner: {if app.business_owner, do: app.business_owner.full_name, else: "—"} · {length(app.admin_assignments)} admin(s)
+                </p>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span
+                  :if={app.live_integration and app.integration_type == :api}
+                  class="badge badge-sm badge-success"
+                >
+                  API
+                </span>
+                <span
+                  :if={app.live_integration and app.integration_type == :agentic}
+                  class="badge badge-sm badge-success"
+                >
+                  PLAYWRIGHT
+                </span>
+                <span :if={not app.live_integration} class="badge badge-sm badge-ghost">MOCK</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div :if={@applications == []} class="px-4 py-8 text-center text-sm text-base-content/50">
-          No applications configured.
         </div>
       </div>
     </div>
     """
   end
-
-  defp integration_badge_class(:api), do: "badge-info"
-  defp integration_badge_class(:agentic), do: "badge-secondary"
-  defp integration_badge_class(:scim), do: "badge-primary"
-  defp integration_badge_class(:manual), do: "badge-ghost"
-  defp integration_badge_class(_), do: "badge-ghost"
 end
