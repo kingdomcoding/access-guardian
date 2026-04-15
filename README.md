@@ -51,7 +51,7 @@ Visit [localhost:4000](http://localhost:4000). The seed data creates 6 users, 7 
 ┌────────────────────────┼─────────────────────────────────┐
 │  Access Domain (Ash)   │  Provisioning Context            │
 │  • create_request      │  • GitHub Adapter (real API)     │
-│  • approve_request     │  • Notion Adapter → HTTP →       │
+│  • approve_request     │  • GitLab Adapter → HTTP →       │
 │  • deny_request        │      Playwright Service          │
 │  • complete_provisioning│  • Simulated adapters (mock)    │
 │  • fail_provisioning   │  • Oban ProvisionWorker          │
