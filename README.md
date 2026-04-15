@@ -50,15 +50,22 @@ Visit [localhost:4000](http://localhost:4000). The seed data creates 6 users, 7 
                          │
 ┌────────────────────────┼─────────────────────────────────┐
 │  Access Domain (Ash)   │  Provisioning Context            │
-│  • create_request      │  • Adapter behaviour             │
-│  • approve_request     │  • API / Agentic / SCIM / Manual │
-│  • deny_request        │  • Oban ProvisionWorker          │
-│  • complete_provisioning                                  │
-│  • fail_provisioning                                      │
-└───────────────────────────────────────────────────────────┘
+│  • create_request      │  • GitHub Adapter (real API)     │
+│  • approve_request     │  • Notion Adapter → HTTP →       │
+│  • deny_request        │      Playwright Service          │
+│  • complete_provisioning│  • Simulated adapters (mock)    │
+│  • fail_provisioning   │  • Oban ProvisionWorker          │
+└────────────────────────┼─────────────────────────────────┘
                          │
-                    PostgreSQL
+    ┌────────────────────┼────────────────────┐
+    │                    │                    │
+    ▼                    ▼                    ▼
+PostgreSQL     Playwright Service     GitHub API
+               (Node + Chromium)     (api.github.com)
+               port 3000
 ```
+
+The Playwright service is a separate Docker container running Node.js + Chromium. The Elixir app calls it via HTTP — mirroring AccessOwl's architecture where the Elixir core and TypeScript integration layer are separate services.
 
 ## Integration Catalog
 
