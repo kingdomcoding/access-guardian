@@ -52,8 +52,18 @@ defmodule AccessGuardian.Provisioning.Adapters.GithubAdapter do
       {:ok, %{status: 404}} ->
         {:error, :permanent, "GitHub user #{username} not found"}
 
-      {:ok, %{status: 403}} ->
-        {:error, :permanent, "Insufficient permissions — check token scopes (needs admin:org)"}
+      {:ok, %{status: 403, body: %{"message" => msg}}} when is_binary(msg) ->
+        if String.contains?(msg, "cannot demote") do
+          Logger.info("[GithubAdapter] #{username} is already an org owner — treating as success")
+          {:ok, %{"user" => %{"id" => username}}}
+        else
+          Logger.error("[GithubAdapter] 403: #{msg}")
+          {:error, :permanent, "GitHub 403: #{msg}"}
+        end
+
+      {:ok, %{status: 403, body: body}} ->
+        Logger.error("[GithubAdapter] 403: #{inspect(body)}")
+        {:error, :permanent, "GitHub 403: #{inspect(body)}"}
 
       {:ok, %{status: 429}} ->
         {:error, :transient, "GitHub rate limit exceeded"}
