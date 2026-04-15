@@ -120,7 +120,7 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
     end
   end
 
-  @bookmarklet_snippet "copy(JSON.stringify(document.cookie.split('; ').map(c=>{const[n,...v]=c.split('=');return{name:n,value:v.join('='),domain:'.notion.so',path:'/'}})))"
+  @bookmarklet_snippet "(()=>{const c=JSON.stringify(document.cookie.split('; ').map(c=>{const[n,...v]=c.split('=');return{name:n,value:v.join('='),domain:'.notion.so',path:'/'}}));copy(c);console.log(`Copied ${JSON.parse(c).length} cookies to clipboard`)})()"
 
   @impl true
   def render(assigns) do
