@@ -1,4 +1,5 @@
-import { chromium, Browser, Page } from "playwright";
+import { chromium, type Browser } from "playwright";
+import fs from "fs";
 
 interface Step {
   step: number;
@@ -14,68 +15,82 @@ export interface Result {
   steps: Step[];
 }
 
-interface Credentials {
-  email: string;
-  password: string;
-}
-
-async function login(page: Page, creds: Credentials, steps: Step[]): Promise<void> {
-  steps.push({ step: 1, name: "navigate_login", status: "running" });
-  await page.goto("https://www.notion.so/login", { waitUntil: "networkidle", timeout: 15000 });
-  steps[steps.length - 1].status = "done";
-
-  steps.push({ step: 2, name: "enter_email", status: "running" });
-  await page.fill('input[type="email"]', creds.email);
-  await page.click('input[type="submit"], button[type="submit"]');
-  await page.waitForTimeout(2000);
-  steps[steps.length - 1].status = "done";
-
-  steps.push({ step: 3, name: "enter_password", status: "running" });
-  await page.fill('input[type="password"]', creds.password);
-  await page.click('input[type="submit"], button[type="submit"]');
-  await page.waitForNavigation({ waitUntil: "networkidle", timeout: 15000 });
-  steps[steps.length - 1].status = "done";
-}
+const DEFAULT_SESSION_PATH = "/app/data/notion.json";
 
 export async function provision(
   email: string,
   workspaceUrl: string,
-  creds: Credentials
+  sessionPath: string = DEFAULT_SESSION_PATH
 ): Promise<Result> {
   const steps: Step[] = [];
   let browser: Browser | null = null;
 
   try {
-    browser = await chromium.launch({ headless: true });
-    const page = await browser.newPage();
-
-    await login(page, creds, steps);
-
-    steps.push({ step: 4, name: "navigate_members", status: "running" });
-    await page.goto(`${workspaceUrl}/settings/members`, { waitUntil: "networkidle", timeout: 15000 });
+    steps.push({ step: 1, name: "load_session", status: "running" });
+    if (!fs.existsSync(sessionPath)) {
+      steps[steps.length - 1].status = "failed";
+      return {
+        success: false,
+        error: "No session found. Complete setup at /integrations/setup first.",
+        error_type: "permanent",
+        steps,
+      };
+    }
     steps[steps.length - 1].status = "done";
 
-    steps.push({ step: 5, name: "invite_member", status: "running" });
-    const addButton = page.locator('button:has-text("Add members"), [role="button"]:has-text("Add")');
+    browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext({ storageState: sessionPath });
+    const page = await context.newPage();
+
+    steps.push({ step: 2, name: "navigate_members", status: "running" });
+    await page.goto(`${workspaceUrl}/settings/members`, {
+      waitUntil: "networkidle",
+      timeout: 20000,
+    });
+
+    if (page.url().includes("/login") || page.url().includes("/signin")) {
+      steps[steps.length - 1].status = "failed";
+      return {
+        success: false,
+        error: "Session expired. Re-authenticate at /integrations/setup.",
+        error_type: "permanent",
+        steps,
+      };
+    }
+    steps[steps.length - 1].status = "done";
+
+    steps.push({ step: 3, name: "invite_member", status: "running" });
+    const addButton = page.locator(
+      'button:has-text("Add members"), [role="button"]:has-text("Add")'
+    );
     await addButton.first().click({ timeout: 5000 });
     await page.waitForTimeout(1000);
 
-    const emailInput = page.locator('input[placeholder*="email" i], input[type="email"]');
+    const emailInput = page.locator(
+      'input[placeholder*="email" i], input[type="email"]'
+    );
     await emailInput.first().fill(email);
     await page.waitForTimeout(500);
 
-    const inviteButton = page.locator('button:has-text("Invite"), [role="button"]:has-text("Invite")');
+    const inviteButton = page.locator(
+      'button:has-text("Invite"), [role="button"]:has-text("Invite")'
+    );
     await inviteButton.first().click({ timeout: 5000 });
     await page.waitForTimeout(2000);
     steps[steps.length - 1].status = "done";
 
     return { success: true, external_account_id: `notion:${email}`, steps };
-  } catch (err: unknown) {
+  } catch (err) {
     const lastStep = steps[steps.length - 1];
     if (lastStep) lastStep.status = "failed";
     const message = err instanceof Error ? err.message : String(err);
     const isTimeout = message.includes("Timeout") || message.includes("timeout");
-    return { success: false, error: message, error_type: isTimeout ? "transient" : "permanent", steps };
+    return {
+      success: false,
+      error: message,
+      error_type: isTimeout ? "transient" : "permanent",
+      steps,
+    };
   } finally {
     if (browser) await browser.close();
   }
@@ -84,22 +99,46 @@ export async function provision(
 export async function deprovision(
   email: string,
   workspaceUrl: string,
-  creds: Credentials
+  sessionPath: string = DEFAULT_SESSION_PATH
 ): Promise<Result> {
   const steps: Step[] = [];
   let browser: Browser | null = null;
 
   try {
-    browser = await chromium.launch({ headless: true });
-    const page = await browser.newPage();
-
-    await login(page, creds, steps);
-
-    steps.push({ step: 4, name: "navigate_members", status: "running" });
-    await page.goto(`${workspaceUrl}/settings/members`, { waitUntil: "networkidle", timeout: 15000 });
+    steps.push({ step: 1, name: "load_session", status: "running" });
+    if (!fs.existsSync(sessionPath)) {
+      steps[steps.length - 1].status = "failed";
+      return {
+        success: false,
+        error: "No session found. Complete setup at /integrations/setup first.",
+        error_type: "permanent",
+        steps,
+      };
+    }
     steps[steps.length - 1].status = "done";
 
-    steps.push({ step: 5, name: "find_and_remove", status: "running" });
+    browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext({ storageState: sessionPath });
+    const page = await context.newPage();
+
+    steps.push({ step: 2, name: "navigate_members", status: "running" });
+    await page.goto(`${workspaceUrl}/settings/members`, {
+      waitUntil: "networkidle",
+      timeout: 20000,
+    });
+
+    if (page.url().includes("/login") || page.url().includes("/signin")) {
+      steps[steps.length - 1].status = "failed";
+      return {
+        success: false,
+        error: "Session expired. Re-authenticate at /integrations/setup.",
+        error_type: "permanent",
+        steps,
+      };
+    }
+    steps[steps.length - 1].status = "done";
+
+    steps.push({ step: 3, name: "find_and_remove", status: "running" });
     const memberRow = page.locator(`text="${email}"`).first();
     await memberRow.hover();
 
@@ -107,22 +146,31 @@ export async function deprovision(
     await moreButton.click({ timeout: 5000 });
     await page.waitForTimeout(500);
 
-    const removeOption = page.locator('text="Remove from workspace", [role="menuitem"]:has-text("Remove")').first();
+    const removeOption = page.locator(
+      'text="Remove from workspace", [role="menuitem"]:has-text("Remove")'
+    ).first();
     await removeOption.click({ timeout: 5000 });
     await page.waitForTimeout(1000);
 
-    const confirmButton = page.locator('button:has-text("Remove"), button:has-text("Confirm")').first();
+    const confirmButton = page.locator(
+      'button:has-text("Remove"), button:has-text("Confirm")'
+    ).first();
     await confirmButton.click({ timeout: 5000 });
     await page.waitForTimeout(2000);
     steps[steps.length - 1].status = "done";
 
     return { success: true, external_account_id: `notion:${email}`, steps };
-  } catch (err: unknown) {
+  } catch (err) {
     const lastStep = steps[steps.length - 1];
     if (lastStep) lastStep.status = "failed";
     const message = err instanceof Error ? err.message : String(err);
     const isTimeout = message.includes("Timeout") || message.includes("timeout");
-    return { success: false, error: message, error_type: isTimeout ? "transient" : "permanent", steps };
+    return {
+      success: false,
+      error: message,
+      error_type: isTimeout ? "transient" : "permanent",
+      steps,
+    };
   } finally {
     if (browser) await browser.close();
   }
