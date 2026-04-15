@@ -50,12 +50,16 @@ defmodule AccessGuardian.Provisioning.Adapters.NotionAdapter do
            receive_timeout: 30_000,
            connect_options: [timeout: 5_000]
          ) do
-      {:ok, %{status: 200, body: %{"success" => true}}} -> :ok
+      {:ok, %{status: 200, body: %{"success" => true}}} ->
+        :ok
+
       {:ok, %{status: 200, body: %{"success" => false} = body}} ->
         error_type = if body["error_type"] == "transient", do: :transient, else: :permanent
         {:error, error_type, body["error"] || "Deprovision failed"}
+
       {:error, %{reason: :econnrefused}} ->
         {:error, :transient, "Playwright service not available"}
+
       {:error, reason} ->
         {:error, :transient, "Playwright service error: #{inspect(reason)}"}
     end

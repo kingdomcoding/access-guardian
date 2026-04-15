@@ -31,6 +31,7 @@ defmodule AccessGuardian.Catalog.Application do
     attribute(:business_owner_id, :uuid, public?: true)
     attribute(:approval_policy_id, :uuid, public?: true)
     attribute(:config, :map, default: %{}, public?: true)
+    attribute(:live_integration, :boolean, default: false, public?: true)
 
     create_timestamp(:inserted_at)
     update_timestamp(:updated_at)
@@ -67,14 +68,15 @@ defmodule AccessGuardian.Catalog.Application do
         :integration_type,
         :business_owner_id,
         :approval_policy_id,
-        :config
+        :config,
+        :live_integration
       ])
     end
 
     read :assigned_by_org do
       argument(:organization_id, :uuid, allow_nil?: false)
       filter(expr(organization_id == ^arg(:organization_id) and status == :assigned))
-      prepare(build(sort: [name: :asc]))
+      prepare(build(sort: [live_integration: :desc, name: :asc]))
     end
   end
 end

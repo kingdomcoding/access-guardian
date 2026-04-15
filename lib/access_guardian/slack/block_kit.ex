@@ -78,7 +78,8 @@ defmodule AccessGuardian.Slack.BlockKit do
             placeholder: %{type: "plain_text", text: "Select an application"},
             options:
               Enum.map(applications, fn app ->
-                %{text: %{type: "plain_text", text: app.name}, value: app.id}
+                label = if app.live_integration, do: "#{app.name} ✦ live", else: app.name
+                %{text: %{type: "plain_text", text: label}, value: app.id}
               end)
           },
           label: %{type: "plain_text", text: "Application"}

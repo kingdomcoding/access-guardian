@@ -115,7 +115,8 @@ Catalog.create_step(%{
     config: %{
       "github_org" => System.get_env("GITHUB_ORG", ""),
       "github_team" => "engineering"
-    }
+    },
+    live_integration: true
   })
 
 {:ok, notion} =
@@ -127,7 +128,8 @@ Catalog.create_step(%{
     approval_policy_id: default_policy.id,
     config: %{
       "notion_workspace_url" => System.get_env("NOTION_WORKSPACE_URL", "")
-    }
+    },
+    live_integration: true
   })
 
 # --- MOCK API INTEGRATIONS ---

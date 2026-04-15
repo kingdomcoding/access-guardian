@@ -43,9 +43,13 @@ defmodule AccessGuardianWeb.ApplicationsLive do
                 )} admin(s)
               </p>
             </div>
-            <span class={["badge badge-sm", integration_badge_class(app.integration_type)]}>
-              {app.integration_type}
-            </span>
+            <div class="flex items-center gap-1.5">
+              <span :if={app.live_integration} class="badge badge-sm badge-success">LIVE</span>
+              <span :if={not app.live_integration} class="badge badge-sm badge-ghost">MOCK</span>
+              <span class={["badge badge-sm", integration_badge_class(app.integration_type)]}>
+                {app.integration_type}
+              </span>
+            </div>
           </div>
         </div>
         <div :if={@applications == []} class="px-4 py-8 text-center text-sm text-base-content/50">
