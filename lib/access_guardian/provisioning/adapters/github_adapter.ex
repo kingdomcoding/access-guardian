@@ -4,7 +4,7 @@ defmodule AccessGuardian.Provisioning.Adapters.GithubAdapter do
 
   @impl true
   def provision(app, user, _entitlements) do
-    token = System.get_env("GITHUB_TOKEN")
+    token = app.config["github_token"] || System.get_env("GITHUB_TOKEN")
     org = app.config["github_org"] || System.get_env("GITHUB_ORG")
     email = to_string(user.email)
 
@@ -22,7 +22,7 @@ defmodule AccessGuardian.Provisioning.Adapters.GithubAdapter do
 
   @impl true
   def deprovision(app, user) do
-    token = System.get_env("GITHUB_TOKEN")
+    token = app.config["github_token"] || System.get_env("GITHUB_TOKEN")
     org = app.config["github_org"] || System.get_env("GITHUB_ORG")
     email = to_string(user.email)
 

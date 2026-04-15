@@ -48,7 +48,7 @@ defmodule AccessGuardian.Provisioning.ProvisionWorker do
   def select_adapter(app) do
     case app.integration_type do
       :api ->
-        if has_config?(app, "github_org") and env_set?("GITHUB_TOKEN"),
+        if has_config?(app, "github_org") and has_github_token?(app),
           do: Adapters.GithubAdapter,
           else: Adapters.ApiAdapter
 
@@ -71,6 +71,10 @@ defmodule AccessGuardian.Provisioning.ProvisionWorker do
   end
 
   defp env_set?(var), do: System.get_env(var) not in [nil, ""]
+
+  defp has_github_token?(app) do
+    has_config?(app, "github_token") or env_set?("GITHUB_TOKEN")
+  end
 
   defp has_active_session?(platform) do
     case Ash.read(AccessGuardian.Catalog.IntegrationSession) do

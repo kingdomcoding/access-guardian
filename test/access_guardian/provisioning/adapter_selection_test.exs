@@ -30,6 +30,11 @@ defmodule AccessGuardian.Provisioning.AdapterSelectionTest do
     assert ProvisionWorker.select_adapter(app) == Adapters.GithubAdapter
   end
 
+  test "api app with github token in config uses real adapter" do
+    app = %{integration_type: :api, config: %{"github_org" => "my-org", "github_token" => "ghp_test"}}
+    assert ProvisionWorker.select_adapter(app) == Adapters.GithubAdapter
+  end
+
   test "agentic app with empty config uses simulated adapter" do
     app = %{integration_type: :agentic, config: %{}}
     assert ProvisionWorker.select_adapter(app) == Adapters.AgenticAdapter
