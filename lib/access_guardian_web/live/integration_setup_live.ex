@@ -4,24 +4,27 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
   @impl true
   def mount(_params, _session, socket) do
     {:ok, apps} = Ash.read(AccessGuardian.Catalog.Application)
-    notion_app = Enum.find(apps, &(&1.config["notion_workspace_url"]))
+    gitlab_app = Enum.find(apps, &(&1.config["gitlab_group_path"]))
 
     current_session =
-      if notion_app do
+      if gitlab_app do
         case Ash.read(AccessGuardian.Catalog.IntegrationSession) do
           {:ok, sessions} ->
-            Enum.find(sessions, &(&1.platform == :notion and &1.status == :active))
+            Enum.find(sessions, &(&1.platform == :gitlab and &1.status == :active))
 
           _ ->
             nil
         end
       end
 
+    group_path = gitlab_app && gitlab_app.config["gitlab_group_path"]
+
     {:ok,
      assign(socket,
        page_title: "Integration Setup",
-       notion_app: notion_app,
+       gitlab_app: gitlab_app,
        current_session: current_session,
+       group_path: group_path || "",
        status: nil,
        submitting: false
      )}
@@ -31,12 +34,12 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
   def handle_event("submit_cookies", %{"cookies" => cookies_json}, socket) do
     socket = assign(socket, submitting: true, status: {:loading, "Validating cookies..."})
 
-    case validate_and_save(cookies_json, socket.assigns.notion_app) do
+    case validate_and_save(cookies_json, socket.assigns.gitlab_app, socket.assigns.group_path) do
       {:ok, session} ->
         {:noreply,
          assign(socket,
            submitting: false,
-           status: {:success, "Session saved successfully. Notion integration is now active."},
+           status: {:success, "Session saved successfully. GitLab integration is now active."},
            current_session: session
          )}
 
@@ -49,17 +52,17 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
     end
   end
 
-  defp validate_and_save(cookies_json, notion_app) do
+  defp validate_and_save(cookies_json, gitlab_app, group_path) do
     with {:ok, cookies} <- parse_cookies(cookies_json),
-         {:ok, _} <- call_playwright_validate(cookies) do
-      expire_existing_sessions(:notion)
+         {:ok, _} <- call_playwright_validate(cookies, group_path) do
+      expire_existing_sessions(:gitlab)
 
       attrs = %{
-        platform: :notion,
+        platform: :gitlab,
         status: :active,
-        workspace_url: "https://www.notion.so",
+        workspace_url: "https://gitlab.com/groups/#{group_path}/-/group_members",
         captured_at: DateTime.utc_now(),
-        application_id: notion_app && notion_app.id
+        application_id: gitlab_app && gitlab_app.id
       }
 
       case Ash.create(AccessGuardian.Catalog.IntegrationSession, attrs, action: :create) do
@@ -72,15 +75,15 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
   defp parse_cookies(json_string) do
     case Jason.decode(json_string) do
       {:ok, cookies} when is_list(cookies) -> {:ok, cookies}
-      _ -> {:error, "Invalid JSON. Make sure you copied the output from the console snippet."}
+      _ -> {:error, "Invalid JSON. Make sure you exported cookies from Cookie-Editor."}
     end
   end
 
-  defp call_playwright_validate(cookies) do
+  defp call_playwright_validate(cookies, group_path) do
     service_url = System.get_env("PLAYWRIGHT_SERVICE_URL") || "http://playwright:3000"
 
     case Req.post("#{service_url}/validate-session",
-           json: %{cookies: cookies},
+           json: %{cookies: cookies, group_path: group_path},
            receive_timeout: 30_000,
            connect_options: [timeout: 5_000]
          ) do
@@ -115,11 +118,8 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
     end
   end
 
-  @bookmarklet_snippet "(()=>{const c=JSON.stringify(document.cookie.split('; ').map(c=>{const[n,...v]=c.split('=');return{name:n,value:v.join('='),domain:'.notion.so',path:'/'}}));copy(c);console.log(`Copied ${JSON.parse(c).length} cookies to clipboard`)})()"
-
   @impl true
   def render(assigns) do
-    assigns = assign(assigns, :snippet, @bookmarklet_snippet)
     ~H"""
     <div class="max-w-2xl mx-auto px-4 py-6">
       <div class="flex items-center justify-between mb-6">
@@ -131,7 +131,7 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
 
       <div :if={@current_session} class="alert alert-success mb-6">
         <div>
-          <p class="font-semibold">Notion session active</p>
+          <p class="font-semibold">GitLab session active</p>
           <p class="text-sm opacity-80">
             Captured: {Calendar.strftime(@current_session.captured_at, "%b %d, %Y at %H:%M UTC")}
           </p>
@@ -139,41 +139,37 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
       </div>
 
       <div :if={!@current_session} class="alert alert-warning mb-6">
-        <p>No active Notion session. Complete the setup below to enable Notion provisioning.</p>
+        <p>No active GitLab session. Complete the setup below to enable GitLab provisioning.</p>
       </div>
 
       <div class="bg-base-100 rounded-xl border border-base-300 p-5 mb-3">
         <p class="font-semibold text-sm text-base-content mb-1">
-          <span class="badge badge-sm badge-neutral mr-1.5">1</span> Log into Notion
+          <span class="badge badge-sm badge-neutral mr-1.5">1</span> Log into GitLab
         </p>
         <p class="text-sm text-base-content/60">
-          Open
-          <a href="https://www.notion.so" target="_blank" class="link link-primary">notion.so</a>
-          in another tab and log into the account with admin/owner access to your workspace.
+          Open your GitLab group members page at
+          <a
+            href={"https://gitlab.com/groups/#{@group_path}/-/group_members"}
+            target="_blank"
+            class="link link-primary"
+          >
+            gitlab.com/groups/{@group_path}/-/group_members
+          </a>
+          and make sure you are logged in as an Owner.
         </p>
       </div>
 
       <div class="bg-base-100 rounded-xl border border-base-300 p-5 mb-3">
         <p class="font-semibold text-sm text-base-content mb-1">
-          <span class="badge badge-sm badge-neutral mr-1.5">2</span> Copy your session cookies
+          <span class="badge badge-sm badge-neutral mr-1.5">2</span> Export your cookies
         </p>
         <p class="text-sm text-base-content/60 mb-2">
-          While on Notion, open your browser console (<strong>F12 &rarr; Console</strong>) and paste this snippet:
+          Install the
+          <a href="https://cookie-editor.com" target="_blank" class="link link-primary">Cookie-Editor</a>
+          browser extension. While on the GitLab members page, click the extension icon and click <strong>Export</strong> (JSON format).
         </p>
-        <div class="relative">
-          <pre
-            class="bg-base-200 rounded-lg p-3 text-xs font-mono overflow-x-auto"
-            id="cookie-snippet"
-          >{@snippet}</pre>
-          <button
-            class="btn btn-xs btn-neutral absolute top-2 right-2"
-            onclick="navigator.clipboard.writeText(document.getElementById('cookie-snippet').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)"
-          >
-            Copy
-          </button>
-        </div>
         <p class="text-xs text-base-content/40 mt-2">
-          This reads cookies for the current page and copies them as JSON to your clipboard. Nothing is sent anywhere.
+          Cookie-Editor exports all cookies including httpOnly session cookies that JavaScript cannot access.
         </p>
       </div>
 
@@ -187,7 +183,7 @@ defmodule AccessGuardianWeb.IntegrationSetupLive do
             <label class="label text-sm font-medium">Cookies JSON</label>
             <textarea
               name="cookies"
-              placeholder="Paste the copied JSON here..."
+              placeholder="Paste the exported JSON here..."
               class="textarea textarea-bordered w-full font-mono text-xs"
               rows="5"
             ></textarea>
