@@ -332,17 +332,24 @@ defmodule AccessGuardianWeb.DashboardLive do
           </div>
           <button type="submit" class="btn btn-primary btn-sm">Create Request</button>
         </form>
-        <p class="text-xs text-base-content/40 mt-3">
-          Or try via Slack —
-          <a
-            href="https://join.slack.com/t/access-guardian-demo/shared_invite/zt-3v3fpne7b-d_eXEtT6IBOeGtpWe_QjJw"
-            target="_blank"
-            class="link"
-          >
-            join access-guardian-demo.slack.com
-          </a>
-          and type <code class="text-base-content/60">/request</code>
-        </p>
+        <div class="mt-4 pt-4 border-t border-base-200">
+          <p class="text-sm font-medium text-base-content mb-2">Or try via Slack</p>
+          <div class="flex flex-wrap items-center gap-3">
+            <a
+              href="https://join.slack.com/t/access-guardian-demo/shared_invite/zt-3v3fpne7b-d_eXEtT6IBOeGtpWe_QjJw"
+              target="_blank"
+              class="btn btn-sm btn-outline"
+            >
+              Join access-guardian-demo.slack.com
+            </a>
+            <span class="text-sm text-base-content/60">
+              then type <code class="bg-base-200 px-1.5 py-0.5 rounded text-sm">/request</code>
+            </span>
+          </div>
+          <p class="text-xs text-base-content/40 mt-2">
+            Both UIs share the same backend — actions from Slack appear here in real-time.
+          </p>
+        </div>
       </div>
 
       <div class="bg-base-100 rounded-xl border border-base-300 p-5">
