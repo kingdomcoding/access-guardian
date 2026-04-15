@@ -14,31 +14,25 @@ defmodule AccessGuardianWeb.DashboardLive do
     {:ok, apps} = AccessGuardian.Catalog.list_applications_by_org(org.id)
     {:ok, users} = AccessGuardian.Catalog.list_users_by_org(org.id)
 
-    gitlab_session =
-      case Ash.read(AccessGuardian.Catalog.IntegrationSession) do
-        {:ok, sessions} ->
-          Enum.find(sessions, &(&1.platform == :gitlab and &1.status == :active))
+    github_app = Enum.find(apps, &(&1.live_integration and &1.integration_type == :api))
+    gitlab_app = Enum.find(apps, &(&1.live_integration and &1.integration_type == :agentic))
 
-        _ ->
-          nil
-      end
+    socket =
+      socket
+      |> assign(
+        page_title: "Dashboard",
+        org: org,
+        recent: Enum.take(requests, 5),
+        apps: apps,
+        users: users,
+        github_app: github_app,
+        gitlab_app: gitlab_app,
+        github_form_open: false,
+        gitlab_form_open: false
+      )
+      |> load_integration_status()
 
-    github_configured =
-      System.get_env("GITHUB_TOKEN") not in [nil, ""] and
-        System.get_env("GITHUB_ORG") not in [nil, ""]
-
-    {:ok,
-     assign(socket,
-       page_title: "Dashboard",
-       org: org,
-       recent: Enum.take(requests, 5),
-       apps: apps,
-       users: users,
-       github_configured: github_configured,
-       github_org: System.get_env("GITHUB_ORG"),
-       gitlab_session: gitlab_session,
-       gitlab_group_path: System.get_env("GITLAB_GROUP_PATH")
-     )}
+    {:ok, socket}
   end
 
   @impl true
@@ -74,10 +68,95 @@ defmodule AccessGuardianWeb.DashboardLive do
     end
   end
 
+  def handle_event("toggle_github_form", _, socket) do
+    {:noreply, assign(socket, github_form_open: !socket.assigns.github_form_open)}
+  end
+
+  def handle_event("configure_github", %{"token" => token, "org" => org}, socket) do
+    app = socket.assigns.github_app
+
+    new_config = Map.merge(app.config || %{}, %{"github_token" => token, "github_org" => org})
+
+    case Ash.update(app, %{config: new_config}, action: :update_config) do
+      {:ok, updated} ->
+        {:noreply,
+         socket
+         |> assign(github_app: updated, github_form_open: false)
+         |> load_integration_status()
+         |> put_flash(:info, "GitHub integration configured.")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to save GitHub config.")}
+    end
+  end
+
+  def handle_event("toggle_gitlab_form", _, socket) do
+    {:noreply, assign(socket, gitlab_form_open: !socket.assigns.gitlab_form_open)}
+  end
+
+  def handle_event("configure_gitlab", %{"group_path" => group_path}, socket) do
+    app = socket.assigns.gitlab_app
+
+    new_config = Map.merge(app.config || %{}, %{"gitlab_group_path" => group_path})
+
+    case Ash.update(app, %{config: new_config}, action: :update_config) do
+      {:ok, updated} ->
+        {:noreply,
+         socket
+         |> assign(gitlab_app: updated, gitlab_form_open: false)
+         |> load_integration_status()
+         |> put_flash(:info, "GitLab group path saved.")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to save GitLab config.")}
+    end
+  end
+
   defp get_org do
     {:ok, [org | _]} = Ash.read(AccessGuardian.Catalog.Organization)
     org
   end
+
+  defp load_integration_status(socket) do
+    github_app = socket.assigns.github_app
+    gitlab_app = socket.assigns.gitlab_app
+
+    github_token_set =
+      config_set?(github_app, "github_token") or env_set?("GITHUB_TOKEN")
+
+    github_org_set =
+      config_set?(github_app, "github_org") or env_set?("GITHUB_ORG")
+
+    github_org =
+      config_val(github_app, "github_org") || System.get_env("GITHUB_ORG")
+
+    gitlab_group_path =
+      config_val(gitlab_app, "gitlab_group_path") || System.get_env("GITLAB_GROUP_PATH")
+
+    gitlab_session =
+      case Ash.read(AccessGuardian.Catalog.IntegrationSession) do
+        {:ok, sessions} ->
+          Enum.find(sessions, &(&1.platform == :gitlab and &1.status == :active))
+
+        _ ->
+          nil
+      end
+
+    assign(socket,
+      github_configured: github_token_set and github_org_set,
+      github_org: github_org,
+      gitlab_group_path: gitlab_group_path,
+      gitlab_session: gitlab_session
+    )
+  end
+
+  defp config_set?(nil, _key), do: false
+  defp config_set?(app, key), do: is_map(app.config) and app.config[key] not in [nil, ""]
+
+  defp config_val(nil, _key), do: nil
+  defp config_val(app, key), do: is_map(app.config) && app.config[key]
+
+  defp env_set?(var), do: System.get_env(var) not in [nil, ""]
 
   defp app_label(%{live_integration: true, integration_type: :api} = app),
     do: "#{app.name} ⚡ API"
@@ -114,12 +193,45 @@ defmodule AccessGuardianWeb.DashboardLive do
             <span class="text-sm font-semibold text-base-content">GitHub</span>
             <span class="badge badge-xs badge-info">API</span>
           </div>
-          <div :if={@github_configured} class="text-xs text-base-content/60">
+          <div :if={@github_configured && !@github_form_open} class="text-xs text-base-content/60">
             Org: <span class="font-medium text-base-content">{@github_org}</span> · Ready
+            <button phx-click="toggle_github_form" class="link link-primary ml-1">Edit</button>
           </div>
-          <div :if={!@github_configured} class="text-xs text-base-content/40">
+          <div :if={!@github_configured && !@github_form_open} class="text-xs text-base-content/40">
             Not configured
           </div>
+          <form
+            :if={@github_form_open || !@github_configured}
+            phx-submit="configure_github"
+            class="mt-2 space-y-2"
+          >
+            <input
+              type="password"
+              name="token"
+              placeholder="ghp_..."
+              class="input input-bordered input-xs w-full"
+              value={@github_app && @github_app.config["github_token"]}
+            />
+            <input
+              type="text"
+              name="org"
+              placeholder="your-org-name"
+              class="input input-bordered input-xs w-full"
+              value={@github_org}
+            />
+            <div class="flex gap-2">
+              <button type="submit" class="btn btn-primary btn-xs">Save</button>
+              <button
+                :if={@github_configured}
+                type="button"
+                phx-click="toggle_github_form"
+                class="btn btn-ghost btn-xs"
+              >
+                Cancel
+              </button>
+            </div>
+            <p class="text-xs text-base-content/30">Token stored in DB for demo only.</p>
+          </form>
         </div>
 
         <div class="bg-base-100 rounded-xl border border-base-300 p-4">
@@ -135,17 +247,50 @@ defmodule AccessGuardianWeb.DashboardLive do
             <span class="text-sm font-semibold text-base-content">GitLab</span>
             <span class="badge badge-xs badge-secondary">Playwright</span>
           </div>
-          <div :if={@gitlab_session} class="text-xs text-base-content/60">
+          <div :if={@gitlab_session && !@gitlab_form_open} class="text-xs text-base-content/60">
             Group: <span class="font-medium text-base-content">{@gitlab_group_path}</span>
             · Session active
+            <button phx-click="toggle_gitlab_form" class="link link-primary ml-1">Edit</button>
           </div>
-          <div :if={!@gitlab_session && @gitlab_group_path} class="text-xs text-base-content/40">
-            No active session ·
+          <div
+            :if={!@gitlab_session && @gitlab_group_path && !@gitlab_form_open}
+            class="text-xs text-base-content/40"
+          >
+            Group: <span class="font-medium text-base-content/60">{@gitlab_group_path}</span>
+            · No session ·
             <.link navigate="/integrations/setup" class="link link-primary">Set up</.link>
+            <button phx-click="toggle_gitlab_form" class="link link-primary ml-1">Edit</button>
           </div>
-          <div :if={!@gitlab_session && !@gitlab_group_path} class="text-xs text-base-content/40">
+          <div
+            :if={!@gitlab_group_path && !@gitlab_form_open}
+            class="text-xs text-base-content/40"
+          >
             Not configured
           </div>
+          <form
+            :if={@gitlab_form_open || !@gitlab_group_path}
+            phx-submit="configure_gitlab"
+            class="mt-2 space-y-2"
+          >
+            <input
+              type="text"
+              name="group_path"
+              placeholder="access-guardian-demo"
+              class="input input-bordered input-xs w-full"
+              value={@gitlab_group_path}
+            />
+            <div class="flex gap-2">
+              <button type="submit" class="btn btn-primary btn-xs">Save</button>
+              <button
+                :if={@gitlab_group_path}
+                type="button"
+                phx-click="toggle_gitlab_form"
+                class="btn btn-ghost btn-xs"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
