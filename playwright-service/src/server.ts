@@ -1,12 +1,12 @@
 import express from "express";
 import { chromium, type Cookie } from "playwright";
-import { provision, deprovision } from "./platforms/notion.js";
+import { provision, deprovision } from "./platforms/gitlab.js";
 
 const app = express();
 app.use(express.json());
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
-const NOTION_BASE = "https://www.notion.so";
+const GITLAB_BASE = "https://gitlab.com";
 
 interface RawCookie {
   name: string;
@@ -48,14 +48,15 @@ app.get("/health", (_req, res) => {
 });
 
 app.post("/validate-session", async (req, res) => {
-  const { cookies } = req.body as { cookies: RawCookie[] };
+  const { cookies, group_path } = req.body as { cookies: RawCookie[]; group_path: string };
 
-  if (!cookies || !Array.isArray(cookies)) {
-    res.status(400).json({ success: false, error: "cookies array required" });
+  if (!cookies || !Array.isArray(cookies) || !group_path) {
+    res.status(400).json({ success: false, error: "cookies array and group_path required" });
     return;
   }
 
   const normalizedCookies = normalizeCookies(cookies);
+  const targetUrl = `${GITLAB_BASE}/groups/${group_path}/-/group_members`;
 
   let browser = null;
   try {
@@ -64,16 +65,16 @@ app.post("/validate-session", async (req, res) => {
     await context.addCookies(normalizedCookies);
 
     const page = await context.newPage();
-    await page.goto(NOTION_BASE, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
     await page.waitForTimeout(3000);
 
     const currentUrl = page.url();
-    if (currentUrl.includes("/login") || currentUrl.includes("/signin")) {
-      res.json({ success: false, error: "Cookies are invalid or expired. Log into Notion and try again." });
+    if (currentUrl.includes("/users/sign_in")) {
+      res.json({ success: false, error: "Cookies are invalid or expired. Log into GitLab and try again." });
       return;
     }
 
-    const sessionPath = "/app/data/notion.json";
+    const sessionPath = "/app/data/gitlab.json";
     await context.storageState({ path: sessionPath });
     console.log(`[ValidateSession] Session saved at ${sessionPath}`);
 
@@ -88,26 +89,26 @@ app.post("/validate-session", async (req, res) => {
 });
 
 app.post("/provision", async (req, res) => {
-  const { email } = req.body as { email: string };
+  const { email, group_path } = req.body as { email: string; group_path: string };
 
-  if (!email) {
-    res.status(400).json({ success: false, error: "email required", error_type: "permanent", steps: [] });
+  if (!email || !group_path) {
+    res.status(400).json({ success: false, error: "email and group_path required", error_type: "permanent", steps: [] });
     return;
   }
 
-  const result = await provision(email);
+  const result = await provision(email, group_path);
   res.json(result);
 });
 
 app.post("/deprovision", async (req, res) => {
-  const { email } = req.body as { email: string };
+  const { email, group_path } = req.body as { email: string; group_path: string };
 
-  if (!email) {
-    res.status(400).json({ success: false, error: "email required", error_type: "permanent", steps: [] });
+  if (!email || !group_path) {
+    res.status(400).json({ success: false, error: "email and group_path required", error_type: "permanent", steps: [] });
     return;
   }
 
-  const result = await deprovision(email);
+  const result = await deprovision(email, group_path);
   res.json(result);
 });
 

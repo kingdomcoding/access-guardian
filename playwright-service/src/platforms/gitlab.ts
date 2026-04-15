@@ -15,19 +15,23 @@ export interface Result {
   steps: Step[];
 }
 
-const NOTION_BASE = "https://www.notion.so";
-const DEFAULT_SESSION_PATH = "/app/data/notion.json";
+const SESSION_PATH = "/app/data/gitlab.json";
+const GITLAB_BASE = "https://gitlab.com";
+
+function membersUrl(groupPath: string): string {
+  return `${GITLAB_BASE}/groups/${groupPath}/-/group_members`;
+}
 
 export async function provision(
   email: string,
-  sessionPath: string = DEFAULT_SESSION_PATH
+  groupPath: string
 ): Promise<Result> {
   const steps: Step[] = [];
   let browser: Browser | null = null;
 
   try {
     steps.push({ step: 1, name: "load_session", status: "running" });
-    if (!fs.existsSync(sessionPath)) {
+    if (!fs.existsSync(SESSION_PATH)) {
       steps[steps.length - 1].status = "failed";
       return {
         success: false,
@@ -39,17 +43,16 @@ export async function provision(
     steps[steps.length - 1].status = "done";
 
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({ storageState: sessionPath });
+    const context = await browser.newContext({ storageState: SESSION_PATH });
     const page = await context.newPage();
 
     steps.push({ step: 2, name: "navigate_members", status: "running" });
-    await page.goto(`${NOTION_BASE}/settings/members`, {
-      waitUntil: "domcontentloaded",
-      timeout: 30000,
-    });
-    await page.waitForTimeout(3000);
+    const url = membersUrl(groupPath);
+    console.log(`[Provision] Navigating to ${url}`);
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.waitForTimeout(2000);
 
-    if (page.url().includes("/login") || page.url().includes("/signin")) {
+    if (page.url().includes("/users/sign_in")) {
       steps[steps.length - 1].status = "failed";
       return {
         success: false,
@@ -61,26 +64,27 @@ export async function provision(
     steps[steps.length - 1].status = "done";
 
     steps.push({ step: 3, name: "invite_member", status: "running" });
-    const addButton = page.locator(
-      'button:has-text("Add members"), [role="button"]:has-text("Add")'
-    );
-    await addButton.first().click({ timeout: 5000 });
+
+    await page.locator('button:has-text("Invite members")').click({ timeout: 5000 });
     await page.waitForTimeout(1000);
 
-    const emailInput = page.locator(
-      'input[placeholder*="email" i], input[type="email"]'
-    );
+    const emailInput = page.locator('[data-testid="members-token-select-input"]')
+      .or(page.locator('input[placeholder*="Search for members"]'))
+      .or(page.locator('.gl-token-selector input'));
     await emailInput.first().fill(email);
+    await page.waitForTimeout(1000);
+
+    await page.keyboard.press("Enter");
     await page.waitForTimeout(500);
 
-    const inviteButton = page.locator(
-      'button:has-text("Invite"), [role="button"]:has-text("Invite")'
-    );
-    await inviteButton.first().click({ timeout: 5000 });
+    await page.locator('[data-testid="invite-modal-submit"]')
+      .or(page.locator('button:has-text("Invite")').last())
+      .click({ timeout: 5000 });
     await page.waitForTimeout(2000);
+
     steps[steps.length - 1].status = "done";
 
-    return { success: true, external_account_id: `notion:${email}`, steps };
+    return { success: true, external_account_id: `gitlab:${email}`, steps };
   } catch (err) {
     const lastStep = steps[steps.length - 1];
     if (lastStep) lastStep.status = "failed";
@@ -99,14 +103,14 @@ export async function provision(
 
 export async function deprovision(
   email: string,
-  sessionPath: string = DEFAULT_SESSION_PATH
+  groupPath: string
 ): Promise<Result> {
   const steps: Step[] = [];
   let browser: Browser | null = null;
 
   try {
     steps.push({ step: 1, name: "load_session", status: "running" });
-    if (!fs.existsSync(sessionPath)) {
+    if (!fs.existsSync(SESSION_PATH)) {
       steps[steps.length - 1].status = "failed";
       return {
         success: false,
@@ -118,17 +122,14 @@ export async function deprovision(
     steps[steps.length - 1].status = "done";
 
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({ storageState: sessionPath });
+    const context = await browser.newContext({ storageState: SESSION_PATH });
     const page = await context.newPage();
 
     steps.push({ step: 2, name: "navigate_members", status: "running" });
-    await page.goto(`${NOTION_BASE}/settings/members`, {
-      waitUntil: "domcontentloaded",
-      timeout: 30000,
-    });
-    await page.waitForTimeout(3000);
+    await page.goto(membersUrl(groupPath), { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.waitForTimeout(2000);
 
-    if (page.url().includes("/login") || page.url().includes("/signin")) {
+    if (page.url().includes("/users/sign_in")) {
       steps[steps.length - 1].status = "failed";
       return {
         success: false,
@@ -140,27 +141,24 @@ export async function deprovision(
     steps[steps.length - 1].status = "done";
 
     steps.push({ step: 3, name: "find_and_remove", status: "running" });
-    const memberRow = page.locator(`text="${email}"`).first();
-    await memberRow.hover();
 
-    const moreButton = page.locator('[aria-label="More"], button:has-text("...")').first();
-    await moreButton.click({ timeout: 5000 });
+    const memberRow = page.locator(`tr:has-text("${email}")`).first();
+    const actionsButton = memberRow.locator('button[aria-label="Actions"]')
+      .or(memberRow.locator('[data-testid="user-action-dropdown"]'));
+    await actionsButton.click({ timeout: 5000 });
     await page.waitForTimeout(500);
 
-    const removeOption = page.locator(
-      'text="Remove from workspace", [role="menuitem"]:has-text("Remove")'
-    ).first();
-    await removeOption.click({ timeout: 5000 });
-    await page.waitForTimeout(1000);
+    await page.locator('button:has-text("Remove member")').click({ timeout: 5000 });
+    await page.waitForTimeout(500);
 
-    const confirmButton = page.locator(
-      'button:has-text("Remove"), button:has-text("Confirm")'
-    ).first();
-    await confirmButton.click({ timeout: 5000 });
+    await page.locator('[data-testid="remove-member-modal-button"]')
+      .or(page.locator('button:has-text("Remove member")').last())
+      .click({ timeout: 5000 });
     await page.waitForTimeout(2000);
+
     steps[steps.length - 1].status = "done";
 
-    return { success: true, external_account_id: `notion:${email}`, steps };
+    return { success: true, external_account_id: `gitlab:${email}`, steps };
   } catch (err) {
     const lastStep = steps[steps.length - 1];
     if (lastStep) lastStep.status = "failed";
