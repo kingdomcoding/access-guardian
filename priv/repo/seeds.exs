@@ -119,15 +119,15 @@ Catalog.create_step(%{
     live_integration: true
   })
 
-{:ok, notion} =
+{:ok, gitlab_agentic} =
   Catalog.create_application(%{
     organization_id: org.id,
-    name: "Notion",
+    name: "GitLab",
     integration_type: :agentic,
     business_owner_id: sarah.id,
     approval_policy_id: default_policy.id,
     config: %{
-      "notion_workspace_url" => System.get_env("NOTION_WORKSPACE_URL", "")
+      "gitlab_group_path" => System.get_env("GITLAB_GROUP_PATH", "")
     },
     live_integration: true
   })
@@ -160,6 +160,7 @@ end)
 # --- MOCK AGENTIC INTEGRATIONS ---
 
 mock_agentic_apps = [
+  {"Notion", elena.id, default_policy.id},
   {"Figma", elena.id, default_policy.id},
   {"Canva", elena.id, auto_policy.id},
   {"HubSpot", elena.id, default_policy.id},
@@ -269,20 +270,20 @@ if figma_req.status == :pending_approval do
   Access.deny_request(figma_req, %{denier_id: marcus.id, reason: "Use Canva instead"})
 end
 
-# 4. Granted — Priya got Notion
+# 4. Granted — Priya got GitLab (agentic)
 Access.AccessRequest
 |> Ash.Changeset.for_create(:create, %{
   organization_id: org.id,
   affected_user_id: priya.id,
   requested_by_id: priya.id,
-  application_id: notion.id,
-  request_reason: "Engineering wiki access"
+  application_id: gitlab_agentic.id,
+  request_reason: "Need access to the engineering group"
 })
 |> Ash.Changeset.force_change_attribute(:status, :granted)
 |> Ash.Changeset.force_change_attribute(:granted_at, DateTime.utc_now())
 |> Ash.Changeset.force_change_attribute(:provisioner_type, "automation")
-|> Ash.Changeset.force_change_attribute(:adapter_type, "agentic")
-|> Ash.Changeset.force_change_attribute(:external_account_id, "agentic-demo-001")
+|> Ash.Changeset.force_change_attribute(:adapter_type, "gitlab_playwright")
+|> Ash.Changeset.force_change_attribute(:external_account_id, "gitlab:priya@acme.com")
 |> Ash.create!()
 
 # 5. Pending manual — David wants Custom Internal Tool
@@ -306,22 +307,22 @@ Access.AccessRequest
 |> Ash.Changeset.force_change_attribute(:approved_at, DateTime.utc_now())
 |> Ash.create!()
 
-# 6. Rejected — James Notion request (agentic adapter failure)
+# 6. Rejected — James GitLab request (agentic adapter failure)
 Access.AccessRequest
 |> Ash.Changeset.for_create(:create, %{
   organization_id: org.id,
   affected_user_id: james.id,
   requested_by_id: james.id,
-  application_id: notion.id,
-  request_reason: "Documentation access"
+  application_id: gitlab_agentic.id,
+  request_reason: "Need group access for code review"
 })
 |> Ash.Changeset.force_change_attribute(:status, :rejected)
 |> Ash.Changeset.force_change_attribute(:rejected_at, DateTime.utc_now())
-|> Ash.Changeset.force_change_attribute(:adapter_type, "agentic")
+|> Ash.Changeset.force_change_attribute(:adapter_type, "gitlab_playwright")
 |> Ash.Changeset.force_change_attribute(
   :reject_reason,
   "UI changed — selector not found at fill_form"
 )
 |> Ash.create!()
 
-IO.puts("✅ Seed complete: 28 apps, 6 requests. Visit http://localhost:4000")
+IO.puts("✅ Seed complete: 29 apps, 6 requests. Visit http://localhost:4000")

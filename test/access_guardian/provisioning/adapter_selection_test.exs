@@ -35,37 +35,37 @@ defmodule AccessGuardian.Provisioning.AdapterSelectionTest do
     assert ProvisionWorker.select_adapter(app) == Adapters.AgenticAdapter
   end
 
-  test "agentic app with notion config but no session uses simulated adapter" do
+  test "agentic app with gitlab config but no session uses simulated adapter" do
     app = %{
       integration_type: :agentic,
-      config: %{"notion_workspace_url" => "https://notion.so/ws"}
+      config: %{"gitlab_group_path" => "access-guardian-demo"}
     }
 
     assert ProvisionWorker.select_adapter(app) == Adapters.AgenticAdapter
   end
 
-  test "agentic app with notion config and active session uses real adapter" do
+  test "agentic app with gitlab config and active session uses real adapter" do
     Ash.create!(AccessGuardian.Catalog.IntegrationSession, %{
-      platform: :notion,
+      platform: :gitlab,
       status: :active,
-      workspace_url: "https://notion.so/ws",
+      workspace_url: "https://gitlab.com/groups/access-guardian-demo/-/group_members",
       captured_at: DateTime.utc_now()
     }, action: :create)
 
     app = %{
       integration_type: :agentic,
-      config: %{"notion_workspace_url" => "https://notion.so/ws"}
+      config: %{"gitlab_group_path" => "access-guardian-demo"}
     }
 
-    assert ProvisionWorker.select_adapter(app) == Adapters.NotionAdapter
+    assert ProvisionWorker.select_adapter(app) == Adapters.GitlabAgenticAdapter
   end
 
-  test "agentic app with notion config and expired session uses simulated adapter" do
+  test "agentic app with gitlab config and expired session uses simulated adapter" do
     session =
       Ash.create!(AccessGuardian.Catalog.IntegrationSession, %{
-        platform: :notion,
+        platform: :gitlab,
         status: :active,
-        workspace_url: "https://notion.so/ws",
+        workspace_url: "https://gitlab.com/groups/access-guardian-demo/-/group_members",
         captured_at: DateTime.utc_now()
       }, action: :create)
 
@@ -73,7 +73,7 @@ defmodule AccessGuardian.Provisioning.AdapterSelectionTest do
 
     app = %{
       integration_type: :agentic,
-      config: %{"notion_workspace_url" => "https://notion.so/ws"}
+      config: %{"gitlab_group_path" => "access-guardian-demo"}
     }
 
     assert ProvisionWorker.select_adapter(app) == Adapters.AgenticAdapter
