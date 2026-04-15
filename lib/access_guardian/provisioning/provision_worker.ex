@@ -53,8 +53,8 @@ defmodule AccessGuardian.Provisioning.ProvisionWorker do
           else: Adapters.ApiAdapter
 
       :agentic ->
-        if has_config?(app, "notion_workspace_url") and has_active_session?(:notion),
-          do: Adapters.NotionAdapter,
+        if has_config?(app, "gitlab_group_path") and has_active_session?(:gitlab),
+          do: Adapters.GitlabAgenticAdapter,
           else: Adapters.AgenticAdapter
 
       :scim ->
@@ -83,7 +83,7 @@ defmodule AccessGuardian.Provisioning.ProvisionWorker do
   end
 
   defp adapter_label(Adapters.GithubAdapter), do: "github_api"
-  defp adapter_label(Adapters.NotionAdapter), do: "notion_playwright"
+  defp adapter_label(Adapters.GitlabAgenticAdapter), do: "gitlab_playwright"
   defp adapter_label(Adapters.ApiAdapter), do: "api_simulated"
   defp adapter_label(Adapters.AgenticAdapter), do: "agentic_simulated"
   defp adapter_label(Adapters.ScimAdapter), do: "scim_simulated"

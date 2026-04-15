@@ -1,4 +1,4 @@
-defmodule AccessGuardian.Provisioning.Adapters.NotionAdapter do
+defmodule AccessGuardian.Provisioning.Adapters.GitlabAgenticAdapter do
   @behaviour AccessGuardian.Provisioning.Adapter
   require Logger
 
@@ -7,13 +7,14 @@ defmodule AccessGuardian.Provisioning.Adapters.NotionAdapter do
   end
 
   @impl true
-  def provision(_app, user, _entitlements) do
+  def provision(app, user, _entitlements) do
     email = to_string(user.email)
+    group_path = app.config["gitlab_group_path"]
 
-    Logger.info("[NotionAdapter] Provisioning #{email} via Playwright service")
+    Logger.info("[GitlabAgenticAdapter] Provisioning #{email} via Playwright service")
 
     case Req.post("#{service_url()}/provision",
-           json: %{email: email},
+           json: %{email: email, group_path: group_path},
            receive_timeout: 30_000,
            connect_options: [timeout: 5_000]
          ) do
@@ -39,13 +40,14 @@ defmodule AccessGuardian.Provisioning.Adapters.NotionAdapter do
   end
 
   @impl true
-  def deprovision(_app, user) do
+  def deprovision(app, user) do
     email = to_string(user.email)
+    group_path = app.config["gitlab_group_path"]
 
-    Logger.info("[NotionAdapter] Deprovisioning #{email} via Playwright service")
+    Logger.info("[GitlabAgenticAdapter] Deprovisioning #{email} via Playwright service")
 
     case Req.post("#{service_url()}/deprovision",
-           json: %{email: email},
+           json: %{email: email, group_path: group_path},
            receive_timeout: 30_000,
            connect_options: [timeout: 5_000]
          ) do
@@ -72,7 +74,7 @@ defmodule AccessGuardian.Provisioning.Adapters.NotionAdapter do
       case Ash.read(AccessGuardian.Catalog.IntegrationSession) do
         {:ok, sessions} ->
           sessions
-          |> Enum.filter(&(&1.platform == :notion and &1.status == :active))
+          |> Enum.filter(&(&1.platform == :gitlab and &1.status == :active))
           |> Enum.each(fn s -> Ash.update!(s, action: :mark_expired) end)
 
         _ ->
@@ -90,7 +92,7 @@ defmodule AccessGuardian.Provisioning.Adapters.NotionAdapter do
 
     Enum.each(steps, fn step ->
       Logger.info(
-        "[NotionAdapter] Step #{step["step"]}/#{total}: #{step["name"]} — #{step["status"]}"
+        "[GitlabAgenticAdapter] Step #{step["step"]}/#{total}: #{step["name"]} — #{step["status"]}"
       )
     end)
   end

@@ -12,7 +12,7 @@ defmodule AccessGuardian.Catalog.IntegrationSession do
     uuid_primary_key(:id)
 
     attribute :platform, :atom do
-      constraints(one_of: [:notion])
+      constraints(one_of: [:gitlab])
       allow_nil?(false)
       public?(true)
     end

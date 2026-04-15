@@ -27,8 +27,8 @@ defmodule AccessGuardian.Slack.BlockKit do
         "github_api" ->
           "📧 An invitation to *#{request.application.name}* has been sent to your email. Check your inbox and accept it to get access."
 
-        "notion_playwright" ->
-          "📧 An invitation to *#{request.application.name}* has been sent to your email."
+        "gitlab_playwright" ->
+          "📧 An invitation to *#{request.application.name}* has been sent to their email."
 
         _ ->
           "✅ *Access granted* to *#{request.application.name}*. You're all set."
