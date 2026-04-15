@@ -60,13 +60,45 @@ Visit [localhost:4000](http://localhost:4000). The seed data creates 6 users, 7 
                     PostgreSQL
 ```
 
+## Integration Catalog
+
+AccessGuardian ships with 28 applications across four integration types. Two use real external APIs; the rest use simulated adapters with realistic timing and failure rates.
+
+| Type | Count | Real | Simulated |
+|---|---|---|---|
+| **API** | 12 | GitHub (REST API) | Google Workspace, Slack, Zoom, 1Password, Datadog, Jira, Linear, Calendly, Amplitude, Loom |
+| **Agentic** | 12 | Notion (Playwright) | Figma, Canva, HubSpot, Salesforce, Intercom, Asana, Monday.com, ClickUp, Miro, Dropbox |
+| **SCIM** | 4 | — | AWS, Okta, JumpCloud, Microsoft 365 |
+| **Manual** | 2 | — | Custom Internal Tool, Legacy CRM |
+
+### Real Integrations
+
+**GitHub (API)** — When `GITHUB_TOKEN` and `GITHUB_ORG` are set, requesting access to GitHub actually invites the user to your GitHub organization and adds them to the configured team. Uses GitHub's REST API with proper error handling (idempotent invites, rate limit retries).
+
+**Notion (Agentic/Playwright)** — When `NOTION_EMAIL` and `NOTION_PASSWORD` are set, requesting access to Notion runs a real Playwright browser automation that logs into Notion's admin UI, navigates to Settings → Members, and invites the user by email. This is the exact approach AccessOwl uses for their "Agentic Integrations."
+
+### Setting Up Real Integrations
+
+Add to `.env`:
+```
+GITHUB_TOKEN=ghp_your-token
+GITHUB_ORG=your-org-name
+NOTION_EMAIL=admin@company.com
+NOTION_PASSWORD=your-password
+NOTION_WORKSPACE_URL=https://www.notion.so/yourworkspace
+```
+
+Without these variables, GitHub and Notion fall back to simulated adapters — identical behavior to every other app.
+
 ## Design Decisions
 
-**Why four adapters and what each simulates:**
-- **API Adapter** (Google Workspace, Slack) — simulated REST calls, 200ms-2s latency, 10% transient failures
-- **Agentic Adapter** (Notion, Figma) — simulated Playwright browser automation, 1-5s multi-step latency, 20% transient failures, 5% permanent "UI changed" failures. Models the real fragility of browser automation at scale — AccessOwl's daily engineering challenge.
-- **SCIM Adapter** (AWS via Okta) — simulated Okta group assignment, low failure rate
-- **Manual Adapter** (HubSpot) — no automation, sends DM to app admin with Grant/Reject buttons
+**Why six adapters (2 real + 4 simulated):**
+- **GitHub Adapter** — Real REST API calls to GitHub. Invites users to orgs, adds to teams, handles rate limits.
+- **Notion Adapter** — Real Playwright browser automation. Logs in, navigates admin UI, invites by email. Demonstrates the exact "Agentic Integration" approach AccessOwl uses.
+- **API Adapter** (simulated) — 200ms-2s latency, 10% transient failures. Used by 10 mock API apps.
+- **Agentic Adapter** (simulated) — 1-5s multi-step latency, 20% transient, 5% "UI changed" failures. Used by 10 mock agentic apps.
+- **SCIM Adapter** (simulated) — Okta group assignment, low failure rate.
+- **Manual Adapter** — No automation, sends DM to app admin with Grant/Reject buttons.
 
 **Why the Agentic adapter has a 20% failure rate:** This models the real fragility of browser automation at scale. Playwright scripts break when SaaS vendors redesign their admin UI. The system must be resilient — Oban retries transient failures with backoff, while permanent failures are reported immediately.
 

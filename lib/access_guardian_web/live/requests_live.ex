@@ -229,7 +229,9 @@ defmodule AccessGuardianWeb.RequestsLive do
             ]}
           >
             <div class="min-w-0">
-              <p class="text-sm font-medium text-base-content truncate">{req.affected_user.full_name}</p>
+              <p class="text-sm font-medium text-base-content truncate">
+                {req.affected_user.full_name}
+              </p>
               <p class="text-xs text-base-content/50">{req.application.name}</p>
             </div>
             <.status_badge status={req.status} pending_manual={req.pending_manual} />
@@ -252,7 +254,10 @@ defmodule AccessGuardianWeb.RequestsLive do
     <div class="bg-base-100 rounded-xl border border-base-300 p-5">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-sm font-semibold text-base-content">Request Detail</h2>
-        <button phx-click="close_detail" class="text-base-content/40 hover:text-base-content/70 text-lg">
+        <button
+          phx-click="close_detail"
+          class="text-base-content/40 hover:text-base-content/70 text-lg"
+        >
           &times;
         </button>
       </div>
@@ -301,7 +306,10 @@ defmodule AccessGuardianWeb.RequestsLive do
         </div>
       </div>
 
-      <div :if={@request.status == :pending_approval} class="mt-4 pt-3 border-t border-base-200 flex gap-2">
+      <div
+        :if={@request.status == :pending_approval}
+        class="mt-4 pt-3 border-t border-base-200 flex gap-2"
+      >
         <button phx-click="approve" phx-value-id={@request.id} class="btn btn-success btn-sm flex-1">
           Approve
         </button>
@@ -311,10 +319,18 @@ defmodule AccessGuardianWeb.RequestsLive do
       </div>
 
       <div :if={@request.pending_manual} class="mt-4 pt-3 border-t border-base-200 flex gap-2">
-        <button phx-click="manual_grant" phx-value-id={@request.id} class="btn btn-success btn-sm flex-1">
+        <button
+          phx-click="manual_grant"
+          phx-value-id={@request.id}
+          class="btn btn-success btn-sm flex-1"
+        >
           Grant Access
         </button>
-        <button phx-click="manual_reject" phx-value-id={@request.id} class="btn btn-error btn-sm flex-1">
+        <button
+          phx-click="manual_reject"
+          phx-value-id={@request.id}
+          class="btn btn-error btn-sm flex-1"
+        >
           Reject
         </button>
       </div>

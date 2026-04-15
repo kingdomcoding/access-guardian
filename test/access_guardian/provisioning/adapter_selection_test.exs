@@ -39,7 +39,12 @@ defmodule AccessGuardian.Provisioning.AdapterSelectionTest do
 
   test "agentic app with notion config and env uses real adapter" do
     System.put_env("NOTION_EMAIL", "test@test.com")
-    app = %{integration_type: :agentic, config: %{"notion_workspace_url" => "https://notion.so/ws"}}
+
+    app = %{
+      integration_type: :agentic,
+      config: %{"notion_workspace_url" => "https://notion.so/ws"}
+    }
+
     assert ProvisionWorker.select_adapter(app) == Adapters.NotionAdapter
   end
 

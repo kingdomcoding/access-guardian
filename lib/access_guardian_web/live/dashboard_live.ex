@@ -92,7 +92,9 @@ defmodule AccessGuardianWeb.DashboardLive do
             </div>
             <div class="flex items-center gap-2">
               <.status_badge status={req.status} pending_manual={req.pending_manual} />
-              <span class="text-xs text-base-content/40 hidden sm:inline">{time_ago(req.inserted_at)}</span>
+              <span class="text-xs text-base-content/40 hidden sm:inline">
+                {time_ago(req.inserted_at)}
+              </span>
             </div>
           </.link>
           <p :if={@recent == []} class="py-8 text-center text-sm text-base-content/50">
