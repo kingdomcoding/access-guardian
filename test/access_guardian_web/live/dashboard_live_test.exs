@@ -24,13 +24,14 @@ defmodule AccessGuardianWeb.DashboardLiveTest do
     :ok
   end
 
-  test "renders dashboard with stats", %{conn: conn} do
+  test "renders welcome page with hero and integration status", %{conn: conn} do
     {:ok, _view, html} = live(conn, "/")
 
-    assert html =~ "Dashboard"
-    assert html =~ "Pipeline"
-    assert html =~ "Granted"
-    assert html =~ "Needs Attention"
+    assert html =~ "AccessGuardian"
+    assert html =~ "Try the Pipeline"
+    assert html =~ "Recent Activity"
+    assert html =~ "GitHub"
+    assert html =~ "GitLab"
   end
 
   test "shows recent requests", %{conn: conn} do

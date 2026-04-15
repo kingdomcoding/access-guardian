@@ -20,16 +20,30 @@ defmodule AccessGuardianWeb.RequestsLive do
     search = params["search"]
     selected_id = params["selected"]
 
-    requests = load_requests(org.id, filter, search)
+    {:ok, all_requests} = AccessGuardian.Access.list_by_org(org.id)
+
+    stats = %{
+      total: length(all_requests),
+      pending: Enum.count(all_requests, &(&1.status == :pending_approval)),
+      granted: Enum.count(all_requests, &(&1.status == :granted))
+    }
+
+    requests =
+      all_requests
+      |> maybe_filter_status(filter)
+      |> maybe_search(search)
+
     selected = if selected_id, do: load_request(selected_id)
 
     {:noreply,
      assign(socket,
        org: org,
        requests: requests,
+       stats: stats,
        selected: selected,
        filter: filter,
-       search: search || ""
+       search: search || "",
+       deny_form_open: nil
      )}
   end
 
@@ -106,21 +120,24 @@ defmodule AccessGuardianWeb.RequestsLive do
   end
 
   defp reload(socket) do
-    requests = load_requests(socket.assigns.org.id, socket.assigns.filter, socket.assigns.search)
+    {:ok, all_requests} = AccessGuardian.Access.list_by_org(socket.assigns.org.id)
+
+    stats = %{
+      total: length(all_requests),
+      pending: Enum.count(all_requests, &(&1.status == :pending_approval)),
+      granted: Enum.count(all_requests, &(&1.status == :granted))
+    }
+
+    requests =
+      all_requests
+      |> maybe_filter_status(socket.assigns.filter)
+      |> maybe_search(socket.assigns.search)
 
     selected =
       if socket.assigns.selected,
         do: load_request(socket.assigns.selected.id)
 
-    assign(socket, requests: requests, selected: selected)
-  end
-
-  defp load_requests(org_id, filter, search) do
-    {:ok, results} = AccessGuardian.Access.list_by_org(org_id)
-
-    results
-    |> maybe_filter_status(filter)
-    |> maybe_search(search)
+    assign(socket, requests: requests, stats: stats, selected: selected)
   end
 
   defp maybe_filter_status(requests, nil), do: requests
@@ -191,6 +208,12 @@ defmodule AccessGuardianWeb.RequestsLive do
         <.link navigate="/" class="text-sm link link-hover text-base-content/60">← Dashboard</.link>
       </div>
 
+      <div class="flex items-center gap-4 text-xs text-base-content/50 mb-3">
+        <span><strong class="text-base-content">{@stats.total}</strong> total</span>
+        <span><strong class="text-warning">{@stats.pending}</strong> pending</span>
+        <span><strong class="text-success">{@stats.granted}</strong> granted</span>
+      </div>
+
       <div class="flex flex-wrap gap-3 mb-4">
         <form phx-change="search" class="flex-1 max-w-sm">
           <input
@@ -206,6 +229,7 @@ defmodule AccessGuardianWeb.RequestsLive do
           <select name="status" class="select select-bordered select-sm">
             <option value="" selected={@filter == nil}>All</option>
             <option value="pending_approval" selected={@filter == "pending_approval"}>Pending</option>
+            <option value="approved" selected={@filter == "approved"}>Approved</option>
             <option value="provisioning" selected={@filter == "provisioning"}>Provisioning</option>
             <option value="granted" selected={@filter == "granted"}>Granted</option>
             <option value="denied" selected={@filter == "denied"}>Denied</option>
