@@ -19,10 +19,13 @@ defmodule AccessGuardian.Provisioning.ProvisionWorker do
         :ok
 
       {:ok, result} ->
-        AccessGuardian.Access.complete_provisioning(request, %{
-          adapter_type: adapter_label(adapter),
-          external_account_id: result.external_account_id
-        })
+        case AccessGuardian.Access.complete_provisioning(request, %{
+               adapter_type: adapter_label(adapter),
+               external_account_id: result.external_account_id
+             }) do
+          {:ok, _} -> :ok
+          {:error, err} -> Logger.error("[ProvisionWorker] complete_provisioning failed: #{inspect(err)}")
+        end
 
         :ok
 
