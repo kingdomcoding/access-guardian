@@ -74,7 +74,7 @@ AccessGuardian ships with 28 applications across four integration types. Two use
 | Type | Count | Real | Simulated |
 |---|---|---|---|
 | **API** | 12 | GitHub (REST API) | Google Workspace, Slack, Zoom, 1Password, Datadog, Jira, Linear, Calendly, Amplitude, Loom |
-| **Agentic** | 12 | Notion (Playwright) | Figma, Canva, HubSpot, Salesforce, Intercom, Asana, Monday.com, ClickUp, Miro, Dropbox |
+| **Agentic** | 13 | GitLab (Playwright) | Notion, Figma, Canva, HubSpot, Salesforce, Intercom, Asana, Monday.com, ClickUp, Miro, Dropbox |
 | **SCIM** | 4 | — | AWS, Okta, JumpCloud, Microsoft 365 |
 | **Manual** | 2 | — | Custom Internal Tool, Legacy CRM |
 
@@ -82,7 +82,7 @@ AccessGuardian ships with 28 applications across four integration types. Two use
 
 **GitHub (API)** — When `GITHUB_TOKEN` and `GITHUB_ORG` are set, requesting access to GitHub actually invites the user to your GitHub organization and adds them to the configured team. Uses GitHub's REST API with proper error handling (idempotent invites, rate limit retries).
 
-**Notion (Agentic/Playwright)** — Uses persistent browser sessions via Playwright — the same approach AccessOwl uses for their "Agentic Integrations." An admin authenticates once via the setup page at `/integrations/setup`, and the system reuses the stored session for all subsequent provisioning. No login automation, no passwords in env vars.
+**GitLab (Agentic/Playwright)** — Uses persistent browser sessions via Playwright — the same approach AccessOwl uses for their "Agentic Integrations." An admin authenticates once via the setup page at `/integrations/setup`, and the system reuses the stored session for all subsequent provisioning. Playwright navigates to GitLab's group members page, clicks "Invite members", and adds the user by email.
 
 ### Setting Up Real Integrations
 
@@ -92,25 +92,25 @@ GITHUB_TOKEN=ghp_your-token
 GITHUB_ORG=your-org-name
 ```
 
-**Notion (Agentic Integration):** Session-based setup via the web UI:
+**GitLab (Agentic Integration):** Session-based setup via the web UI:
 
 1. Visit `/integrations/setup` in your browser
-2. Log into Notion in another tab with your admin account
-3. Open browser console (F12 → Console), paste the provided cookie extraction snippet
-4. Paste the copied cookies into the setup form and submit
+2. Navigate to your GitLab group members page in another tab
+3. Install the Cookie-Editor browser extension, click Export (JSON format)
+4. Paste the exported cookies into the setup form and submit
 5. The system validates the cookies via Playwright and saves the session
 
-After setup, all Notion provisioning uses the stored session automatically. If the session expires, the system detects it, marks it expired in the database, and the admin re-authenticates via the same setup page.
+After setup, all GitLab provisioning uses the stored session automatically. If the session expires, the system detects it, marks it expired in the database, and the admin re-authenticates via the same setup page.
 
-This mirrors how AccessOwl handles apps with magic links, SSO, or CAPTCHA — by capturing an authenticated session once instead of automating the login flow.
+This mirrors how AccessOwl handles apps where API-based provisioning isn't available — by capturing an authenticated session once and automating the admin UI via Playwright.
 
-Without configuration, GitHub and Notion fall back to simulated adapters — identical behavior to every other app.
+Without configuration, GitHub and GitLab fall back to simulated adapters — identical behavior to every other app.
 
 ## Design Decisions
 
 **Why six adapters (2 real + 4 simulated):**
 - **GitHub Adapter** — Real REST API calls to GitHub. Invites users to orgs, adds to teams, handles rate limits.
-- **Notion Adapter** — Real Playwright browser automation with persistent sessions. Loads a stored session (no login), navigates admin UI, invites by email. Demonstrates the exact "Agentic Integration" approach AccessOwl uses — session capture via web UI, storageState persistence, session expiry detection.
+- **GitLab Agentic Adapter** — Real Playwright browser automation with persistent sessions. Loads a stored session (no login), navigates to the group members page, opens the invite modal, and adds the user by email. Demonstrates the "Agentic Integration" approach AccessOwl uses — session capture via web UI, storageState persistence, session expiry detection.
 - **API Adapter** (simulated) — 200ms-2s latency, 10% transient failures. Used by 10 mock API apps.
 - **Agentic Adapter** (simulated) — 1-5s multi-step latency, 20% transient, 5% "UI changed" failures. Used by 10 mock agentic apps.
 - **SCIM Adapter** (simulated) — Okta group assignment, low failure rate.
